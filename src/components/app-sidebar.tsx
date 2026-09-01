@@ -163,7 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link to="/dashboard" onClick={() => startNavigationProgress()}>
                 <span className='flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-sky-200/80 bg-sky-50/90 dark:border-sky-400/20 dark:bg-sky-400/10'>
-                  <img src='/ueg-mark.png' alt='' className='h-5 w-[22px] object-contain' />
+                  <img src={appConfig.brandMarkUrl} alt='' className='h-5 w-[22px] object-contain' />
                 </span>
                 <span className="text-base font-semibold">{appConfig.appName}</span>
               </Link>

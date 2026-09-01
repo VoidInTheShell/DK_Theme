@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { PageHeader } from '@/components/page-header'
 import { useAuth } from '@/features/auth/auth-context'
+import { appConfig } from '@/lib/config'
 import { formatBytes, formatDateTime } from '@/lib/format'
 import { CalendarClock, Gauge, Layers3, Network, RotateCw, Router, ShieldCheck, Users } from 'lucide-react'
 
@@ -105,7 +106,7 @@ export function QuotaPage() {
                 </div>
               </div>
               <div className='flex size-14 items-center justify-center rounded-2xl border border-sky-200/80 bg-white/80 shadow-sm dark:border-sky-400/20 dark:bg-white/5'>
-                <img src='/ueg-mark.png' alt='UEG' className='h-11 w-12 object-contain' />
+                <img src={appConfig.brandMarkUrl} alt='UEG' className='h-11 w-12 object-contain' />
               </div>
             </div>
 

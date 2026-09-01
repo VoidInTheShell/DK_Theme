@@ -1,5 +1,6 @@
 export const appConfig = {
   appName: import.meta.env.VITE_APP_NAME || 'UEG-Net',
+  brandMarkUrl: `${import.meta.env.BASE_URL}ueg-mark.png`,
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/',
   enableMock: String(import.meta.env.VITE_ENABLE_MOCK ?? 'true') !== 'false',
   support: {
