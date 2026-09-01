@@ -2,9 +2,9 @@ name: Build, Publish and Deploy Theme
 
 on:
   push:
-    branches: ["main"]
+    branches: ["**"]
   pull_request:
-    branches: ["main"]
+    branches: ["**"]
   workflow_dispatch:
 
 env:
@@ -119,10 +119,24 @@ jobs:
   deploy-staging:
     name: Update GJHK staging theme
     if: >-
-      github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      startsWith(github.ref, 'refs/heads/') &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'push' &&
+          (
+            github.ref == 'refs/heads/main' ||
+            github.ref == 'refs/heads/master' ||
+            github.ref == 'refs/heads/dev' ||
+            github.ref == 'refs/heads/new-dev'
+          )
+        )
+      )
     needs: build-and-push
     runs-on: ubuntu-latest
+    concurrency:
+      group: staging-${{ github.repository_id }}
+      cancel-in-progress: false
     environment:
       name: staging
       url: ${{ vars.STAGING_PANEL_URL }}
