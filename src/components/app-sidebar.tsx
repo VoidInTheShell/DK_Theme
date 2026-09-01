@@ -5,7 +5,7 @@ import {
   IconBrandTelegram,
   IconCreditCard,
   IconDashboard,
-  IconInnerShadowTop,
+  IconGauge,
   IconLifebuoy,
   IconLink,
   IconPercentage,
@@ -142,8 +142,9 @@ function SupportDialog({
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { logout, user } = useAuth()
+  const { logout, selfUseMode, user } = useAuth()
   const [supportOpen, setSupportOpen] = React.useState(false)
+  const useRestrictedNavigation = selfUseMode && !user?.is_admin && !user?.is_staff
 
   const sidebarUser = {
     name: appConfig.appName,
@@ -161,8 +162,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link to="/dashboard" onClick={() => startNavigationProgress()}>
-                <IconInnerShadowTop className="size-5!" />
-                <span className="text-base font-semibold">{appConfig.appName} 控制台</span>
+                <span className='flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-sky-200/80 bg-sky-50/90 dark:border-sky-400/20 dark:bg-sky-400/10'>
+                  <img src='/ueg-mark.png' alt='' className='h-5 w-[22px] object-contain' />
+                </span>
+                <span className="text-base font-semibold">{appConfig.appName}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -173,10 +176,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           items={[
             { title: "用户中心", url: "/dashboard", icon: IconDashboard },
             { title: "订阅中心", url: "/clients", icon: IconLink },
-            { title: "订购套餐", url: "/plans", icon: IconCreditCard },
+            ...(useRestrictedNavigation
+              ? [{ title: "配额信息", url: "/quota", icon: IconGauge }]
+              : [{ title: "订购套餐", url: "/plans", icon: IconCreditCard }]),
             { title: "节点状态", url: "/node-status", icon: IconRoute },
-            { title: "订单中心", url: "/orders", icon: IconReceipt },
-            { title: "邀请返利", url: "/invite", icon: IconPercentage },
+            ...(!useRestrictedNavigation
+              ? [
+                  { title: "订单中心", url: "/orders", icon: IconReceipt },
+                  { title: "邀请返利", url: "/invite", icon: IconPercentage },
+                ]
+              : []),
             { title: "工单支持", url: "/tickets", icon: IconTicket },
             { title: "安全中心", url: "/settings", icon: IconShieldLock },
             { title: "帮助文档", url: "/knowledge", icon: IconBook },

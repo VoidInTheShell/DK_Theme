@@ -14,6 +14,7 @@ const OrdersPage = lazy(() => import('@/pages/orders-page').then((module) => ({ 
 const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password-page').then((module) => ({ default: module.ForgotPasswordPage })));
 const RegisterPage = lazy(() => import('@/pages/register-page').then((module) => ({ default: module.RegisterPage })));
 const PlansPage = lazy(() => import('@/pages/plans-page').then((module) => ({ default: module.PlansPage })));
+const QuotaPage = lazy(() => import('@/pages/quota-page').then((module) => ({ default: module.QuotaPage })));
 const SettingsPage = lazy(() => import('@/pages/settings-page').then((module) => ({ default: module.SettingsPage })));
 const TicketsPage = lazy(() => import('@/pages/tickets-page').then((module) => ({ default: module.TicketsPage })));
 
@@ -42,6 +43,7 @@ export function AppRouter() {
         <Route path='/dashboard' element={<DashboardPage />} />
         <Route path='/clients' element={<ClientsPage />} />
         <Route path='/plans' element={<PlansPage />} />
+        <Route path='/quota' element={<QuotaPage />} />
         <Route path='/node-status' element={<NodeStatusPage />} />
         <Route path='/orders' element={<OrdersPage />} />
         <Route path='/invite' element={<InvitePage />} />

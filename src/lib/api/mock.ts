@@ -1,4 +1,4 @@
-import type { InviteStat, KnowledgeArticle, NodeStatus, Notice, Order, OrderDetail, PaymentMethod, Plan, SubscribeInfo, Ticket, TicketDetail, UserInfo } from './types';
+import type { InviteStat, KnowledgeArticle, NodeStatus, Notice, Order, OrderDetail, PaymentMethod, Plan, SubscribeInfo, Ticket, TicketDetail, UserCommConfig, UserInfo } from './types';
 
 export const mockUser: UserInfo = {
   email: 'demo@dk-theme.local',
@@ -10,15 +10,34 @@ export const mockUser: UserInfo = {
   d: 204 * 1024 * 1024 * 1024,
   remind_expire: 1,
   remind_traffic: 1,
+  is_admin: false,
+  is_staff: false,
 };
 
 export const mockSubscribe: SubscribeInfo = {
   subscribe_url: 'https://example.com/sub/demo-token',
   token: 'demo-token',
   transfer_enable: mockUser.transfer_enable,
+  u: 28 * 1024 * 1024 * 1024,
   d: mockUser.d,
   expired_at: mockUser.expired_at,
   plan: mockUser.plan,
+  plan_details: {
+    id: 2,
+    name: 'Global Pro 年付版',
+    content: '全球 CDN 网络接入配额',
+    speed_limit: 300,
+    device_limit: 5,
+    reset_traffic_method: 1,
+  },
+  speed_limit: 300,
+  device_limit: 5,
+  next_reset_at: 1788134400,
+  reset_day: 1,
+};
+
+export const mockUserCommConfig: UserCommConfig = {
+  self_use_mode: true,
 };
 
 export const mockPlans: Plan[] = [

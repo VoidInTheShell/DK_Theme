@@ -19,15 +19,37 @@ export type UserInfo = {
   d?: number;
   remind_expire?: number | boolean;
   remind_traffic?: number | boolean;
+  is_admin?: boolean;
+  is_staff?: boolean;
+};
+
+export type SubscribePlan = {
+  id: number;
+  name: string;
+  content?: string | null;
+  speed_limit?: number | null;
+  device_limit?: number | null;
+  transfer_enable?: number | null;
+  reset_traffic_method?: number | null;
 };
 
 export type SubscribeInfo = {
   subscribe_url: string;
   token?: string;
   transfer_enable?: number;
+  u?: number;
   d?: number;
   expired_at?: number | null;
   plan?: string | null;
+  plan_details?: SubscribePlan | null;
+  speed_limit?: number | null;
+  device_limit?: number | null;
+  next_reset_at?: number | null;
+  reset_day?: number | null;
+};
+
+export type UserCommConfig = {
+  self_use_mode?: number | boolean;
 };
 
 export type Plan = {

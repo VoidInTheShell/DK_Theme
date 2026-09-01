@@ -42,7 +42,7 @@ jobs:
       - name: Build staging assets
         env:
           VITE_BASE_PATH: /dk-theme/
-          VITE_APP_NAME: XBoard Staging
+          VITE_APP_NAME: UEG-Net
           VITE_API_BASE_URL: /
           VITE_ENABLE_MOCK: "false"
         run: npm run build
@@ -51,7 +51,7 @@ jobs:
         run: |
           docker build \
             --build-arg VITE_BASE_PATH=/dk-theme/ \
-            --build-arg VITE_APP_NAME='XBoard Staging' \
+            --build-arg VITE_APP_NAME='UEG-Net' \
             --build-arg VITE_API_BASE_URL=/ \
             --build-arg VITE_ENABLE_MOCK=false \
             --tag dk-theme-ci:${GITHUB_SHA} \
@@ -109,7 +109,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_BASE_PATH=/dk-theme/
-            VITE_APP_NAME=XBoard Staging
+            VITE_APP_NAME=UEG-Net
             VITE_API_BASE_URL=/
             VITE_ENABLE_MOCK=false
           cache-from: type=gha

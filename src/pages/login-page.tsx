@@ -14,7 +14,6 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { useAuth } from '@/features/auth/auth-context'
-import { appConfig } from '@/lib/config'
 import { loginSchema, type LoginInput } from '@/lib/api/services/auth'
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -66,8 +65,8 @@ export function LoginPage() {
         <div className='flex flex-col items-center gap-3 text-center'>
           <div className='inline-flex items-center rounded-full border border-primary/12 bg-primary/8 px-3 py-1 text-[11px] font-medium tracking-[0.16em] text-primary uppercase'>账号登录</div>
           <div className='space-y-2'>
-            <h1 className='text-3xl font-semibold tracking-tight'>欢迎回到 {appConfig.appName}</h1>
-            <p className='mx-auto max-w-sm text-sm leading-6 text-balance text-muted-foreground'>输入你的邮箱和密码，继续访问账户、订单与服务信息。</p>
+            <h1 className='text-3xl font-semibold tracking-tight'>欢迎使用UEG Net</h1>
+            <p className='mx-auto max-w-sm text-sm leading-6 text-balance text-muted-foreground'>登录账户，接入UEG全球CDN网络</p>
           </div>
         </div>
 
