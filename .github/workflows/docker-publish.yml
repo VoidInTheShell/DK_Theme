@@ -56,7 +56,7 @@ jobs:
             --build-arg VITE_ENABLE_MOCK=false \
             --tag dk-theme-ci:${GITHUB_SHA} \
             .
-          docker run --rm dk-theme-ci:${GITHUB_SHA} nginx -t
+          docker run --rm --add-host xboard-app:127.0.0.1 dk-theme-ci:${GITHUB_SHA} nginx -t
 
   build-and-push:
     name: Publish multi-architecture image
