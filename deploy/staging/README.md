@@ -1,6 +1,6 @@
 # DK Theme staging image
 
-Every pushed branch builds and publishes a multi-architecture nginx image as `ghcr.io/voidintheshell/dk_theme`. Pushes to `main`, `master`, `dev`, and `new-dev` deploy automatically; other branches deploy only when `workflow_dispatch` is run on that branch. The image contains the Vite output under `/dk-theme/` and a root SPA entrypoint.
+Every pushed branch builds and publishes a multi-architecture nginx image as `ghcr.io/voidintheshell/dk_theme`. Pushes to `main`, `master`, `dev`, and `new-dev`, plus opt-in `staging/**` branches, deploy automatically; other branches deploy only when `workflow_dispatch` is run on that branch. The image contains the Vite output under `/dk-theme/` and a root SPA entrypoint.
 
 The nginx routing contract is intentionally split:
 
