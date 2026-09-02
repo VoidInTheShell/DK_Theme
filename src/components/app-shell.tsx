@@ -15,16 +15,16 @@ export function AppShell() {
 
   return (
     <SidebarProvider
-      className='bg-background'
+      className='min-w-0 overflow-x-hidden bg-background'
       style={{
         ['--header-height' as string]: 'calc(var(--spacing) * 12)',
       }}
     >
       <AppSidebar variant='inset' />
-      <SidebarInset>
+      <SidebarInset className='min-w-0 overflow-x-hidden'>
         <SiteHeader />
-        <div className='flex flex-1 flex-col'>
-          <div className='@container/main flex flex-1 flex-col gap-6 py-6'>
+        <div className='flex min-w-0 flex-1 flex-col'>
+          <div className='@container/main flex min-w-0 flex-1 flex-col gap-6 py-6'>
             <RouteChunkErrorBoundary resetKey={resetKey}>
               <Suspense fallback={<AppShellOutletFallback />}>
                 <Outlet />

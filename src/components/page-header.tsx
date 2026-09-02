@@ -13,8 +13,8 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <div className='flex flex-wrap items-end justify-between gap-4 px-4 lg:px-6'>
-      <div className='space-y-3'>
+    <div className='flex min-w-0 max-w-full flex-wrap items-end justify-between gap-4 px-4 lg:px-6'>
+      <div className='min-w-0 space-y-3'>
         <Badge variant='outline' className='rounded-full border-primary/15 bg-primary/8 px-2.5 py-1 text-primary'>
           {badge}
         </Badge>
@@ -23,7 +23,7 @@ export function PageHeader({
           {description ? <p className='mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-muted-foreground'>{description}</p> : null}
         </div>
       </div>
-      {actions ? <div className='flex flex-wrap items-center gap-3 [&>*]:rounded-full'>{actions}</div> : null}
+      {actions ? <div className='flex min-w-0 max-w-full flex-wrap items-center gap-3 [&>*]:rounded-full'>{actions}</div> : null}
     </div>
   )
 }

@@ -20,6 +20,13 @@ const TicketsPage = lazy(() => import('@/pages/tickets-page').then((module) => (
 
 function ProtectedLayout() {
   const { token, hydrated } = useAuth();
+  const isLocalClientPreview = import.meta.env.DEV
+    && window.location.pathname === '/clients'
+    && new URLSearchParams(window.location.search).get('preview') === 'clients';
+
+  if (isLocalClientPreview) {
+    return <AppShell />;
+  }
   if (!hydrated) {
     return <div className='flex min-h-screen items-center justify-center text-sm text-muted-foreground'>正在初始化用户中心…</div>;
   }
