@@ -13,13 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getNoticeExcerpt } from '@/features/announcements/notice-content'
+import { useAuth } from '@/features/auth/auth-context'
 import {
   getKnowledgeArticleDetail,
   getKnowledgeArticles,
-  getNotices,
 } from '@/lib/api/services/knowledge'
+import { getNotices } from '@/lib/api/services/notices'
 import { formatDateTime } from '@/lib/format'
 import type { KnowledgeArticle } from '@/lib/api/types'
+import { cn } from '@/lib/utils'
 
 type TutorialDoc = {
   id: string
@@ -189,11 +192,12 @@ function renderKnowledgeBody(body?: string) {
 }
 
 export function KnowledgePage() {
+  const { announcementsEnabled } = useAuth()
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null)
   const [articleDialogOpen, setArticleDialogOpen] = useState(false)
 
   const knowledgeQuery = useQuery({ queryKey: ['knowledge-articles'], queryFn: getKnowledgeArticles })
-  const noticesQuery = useQuery({ queryKey: ['support-notices'], queryFn: getNotices })
+  const noticesQuery = useQuery({ queryKey: ['announcements', 1], queryFn: () => getNotices(1), enabled: announcementsEnabled })
 
   const articleDetailQuery = useQuery({
     queryKey: ['knowledge-article-detail', selectedArticleId],
@@ -202,7 +206,7 @@ export function KnowledgePage() {
   })
 
   const articles = useMemo(() => knowledgeQuery.data ?? [], [knowledgeQuery.data])
-  const notices = useMemo(() => noticesQuery.data ?? [], [noticesQuery.data])
+  const notices = useMemo(() => noticesQuery.data?.items.slice(0, 2) ?? [], [noticesQuery.data])
 
   function openArticle(article: KnowledgeArticle) {
     setSelectedArticleId(article.id)
@@ -323,16 +327,16 @@ export function KnowledgePage() {
       </div>
 
       <div id='support' className='px-4 lg:px-6'>
-        <div className='grid gap-6 xl:grid-cols-[1.1fr_0.9fr]'>
-          <Card className='border-slate-200/90 bg-white/96 shadow-lg shadow-slate-200/60 dark:border-border/70 dark:bg-card dark:shadow-none'>
+        <div className={cn('grid gap-6', announcementsEnabled && 'xl:grid-cols-[1.1fr_0.9fr]')}>
+          {announcementsEnabled ? <Card className='border-slate-200/90 bg-white/96 shadow-lg shadow-slate-200/60 dark:border-border/70 dark:bg-card dark:shadow-none'>
             <CardHeader>
               <div className='mb-3 flex items-center gap-3'>
                 <div className='flex size-11 items-center justify-center rounded-2xl bg-primary/12 text-primary'>
                   <BellRing className='size-5' />
                 </div>
                 <div>
-                  <CardTitle>系统公告 / 支持提示</CardTitle>
-                  <CardDescription>查看系统公告与服务通知。</CardDescription>
+                  <CardTitle>最新系统公告</CardTitle>
+                  <CardDescription>查看近期维护、服务变化和安全提醒。</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -356,19 +360,29 @@ export function KnowledgePage() {
                 ))
               ) : notices.length > 0 ? (
                 notices.map((notice) => (
-                  <div key={notice.id} className='rounded-3xl border border-slate-200/80 bg-slate-50/85 p-5 dark:border-border/70 dark:bg-background/35'>
+                  <div key={notice.id} className='flex flex-col gap-3 rounded-3xl border border-slate-200/80 bg-slate-50/85 p-5 dark:border-border/70 dark:bg-background/35'>
                     <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between'>
                       <div className='break-words font-medium text-slate-900 dark:text-foreground'>{notice.title}</div>
                       <div className='text-sm text-slate-500 dark:text-muted-foreground'>{formatDateTime(notice.created_at)}</div>
                     </div>
-                    <div className='mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-muted-foreground'>{notice.content}</div>
+                    {notice.tags?.length ? <div className='flex flex-wrap gap-2'>{notice.tags.map((tag) => <Badge key={tag} variant='secondary'>{tag}</Badge>)}</div> : null}
+                    <p className='text-sm leading-6 text-slate-600 dark:text-muted-foreground'>{getNoticeExcerpt(notice.content, 110) || '该公告暂无正文摘要。'}</p>
+                    <Button asChild variant='outline' className='self-start bg-white/90 dark:bg-transparent'>
+                      <Link to={`/announcements?notice=${notice.id}`}>
+                        查看详情
+                        <ExternalLink data-icon='inline-end' aria-hidden='true' />
+                      </Link>
+                    </Button>
                   </div>
                 ))
               ) : (
                 <div className='rounded-3xl border border-dashed border-slate-200/80 bg-slate-50/70 p-8 text-center text-sm text-slate-500 dark:border-border/70 dark:bg-background/20 dark:text-muted-foreground'>当前暂无支持公告。</div>
               )}
+              <Button asChild variant='ghost' className='self-start px-0'>
+                <Link to='/announcements'>查看全部公告</Link>
+              </Button>
             </CardContent>
-          </Card>
+          </Card> : null}
 
           <Card className='border-slate-200/90 bg-white/96 shadow-lg shadow-slate-200/60 dark:border-border/70 dark:bg-card dark:shadow-none'>
             <CardHeader>

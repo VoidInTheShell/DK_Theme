@@ -1,12 +1,11 @@
 import { apiClient } from '@/lib/api/client';
 import { appConfig } from '@/lib/config';
-import { mockKnowledgeArticles, mockNotices } from '@/lib/api/mock';
-import type { ApiEnvelope, KnowledgeArticle, Notice } from '@/lib/api/types';
+import { mockKnowledgeArticles } from '@/lib/api/mock';
+import type { ApiEnvelope, KnowledgeArticle } from '@/lib/api/types';
 
 type RawKnowledgeRecord = Record<string, unknown>
 type RawKnowledgeData = RawKnowledgeRecord | RawKnowledgeRecord[] | Record<string, RawKnowledgeRecord[]>
 type RawKnowledgeEnvelope = ApiEnvelope<RawKnowledgeData>
-type RawNoticeEnvelope = ApiEnvelope<Notice[]> & { total?: number }
 
 function toNumber(value: unknown) {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -71,10 +70,4 @@ export async function getKnowledgeArticleDetail(id: number) {
   const article = flattenKnowledgeData(response.data.data).find((item) => item.id === id)
   if (!article) throw new Error('Knowledge article not found')
   return article
-}
-
-export async function getNotices() {
-  if (appConfig.enableMock) return mockNotices;
-  const response = await apiClient.get<RawNoticeEnvelope>('/api/v1/user/notice/fetch');
-  return Array.isArray(response.data.data) ? response.data.data : [];
 }

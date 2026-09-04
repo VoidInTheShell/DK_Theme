@@ -1,3 +1,4 @@
+import { appConfig } from '@/lib/config';
 import type { InviteStat, KnowledgeArticle, NodeStatus, Notice, Order, OrderDetail, PaymentMethod, Plan, SubscribeInfo, Ticket, TicketDetail, UserCommConfig, UserInfo } from './types';
 
 export const mockUser: UserInfo = {
@@ -38,6 +39,7 @@ export const mockSubscribe: SubscribeInfo = {
 
 export const mockUserCommConfig: UserCommConfig = {
   self_use_mode: true,
+  enable_announcements: true,
 };
 
 export const mockPlans: Plan[] = [
@@ -177,8 +179,77 @@ export const mockKnowledgeArticles: KnowledgeArticle[] = [
 ];
 
 export const mockNotices: Notice[] = [
-  { id: 1, title: '支付后未立即开通', content: '支付完成后通常会在数秒到数分钟内开通，可前往订单页查看状态。', created_at: 1712731200 },
-  { id: 2, title: '客户端下载建议', content: 'Windows 推荐 Clash Meta 或 v2rayN；iOS 推荐 Stash / Shadowrocket；Android 推荐 NekoBox。', created_at: 1712698920 },
+  {
+    id: 107,
+    title: '九月服务维护窗口与使用说明',
+    content: '<p>为提升跨区域线路稳定性，我们将在本周六 02:00–04:00 完成例行维护。</p><ul><li>已建立的连接可能短暂重连。</li><li>无需重新导入订阅或更换客户端。</li><li>维护完成后可手动更新一次订阅。</li></ul><p>如遇持续异常，请通过工单提供发生时间和所用节点。</p>',
+    img_url: appConfig.brandMarkUrl,
+    tags: ['维护', '重要'],
+    popup: true,
+    sort: 1,
+    created_at: 1788429600,
+    updated_at: 1788429600,
+  },
+  {
+    id: 106,
+    title: '客户端下载入口已更新',
+    content: '订阅中心现已按设备展示推荐客户端、教程和一键导入入口。更新前请先保存正在使用的配置。',
+    tags: ['客户端', '使用指南'],
+    popup: false,
+    sort: 2,
+    created_at: 1788256800,
+    updated_at: 1788256800,
+  },
+  {
+    id: 105,
+    title: '订阅链接安全提醒',
+    content: '订阅链接等同于账户访问凭据，请勿公开分享。若怀疑链接泄露，请前往安全中心重置订阅信息。',
+    tags: ['安全'],
+    popup: false,
+    sort: 3,
+    created_at: 1787997600,
+    updated_at: 1787997600,
+  },
+  {
+    id: 104,
+    title: '部分节点倍率调整说明',
+    content: '为准确反映线路成本，部分高质量线路倍率已调整。实际倍率以节点状态页展示为准。',
+    tags: ['节点'],
+    popup: false,
+    sort: 4,
+    created_at: 1787565600,
+    updated_at: 1787565600,
+  },
+  {
+    id: 103,
+    title: '工单服务时间调整',
+    content: '人工工单将在工作日 09:00–21:00 集中处理。紧急线路故障仍会由监控系统持续跟进。',
+    tags: ['工单'],
+    popup: false,
+    sort: 5,
+    created_at: 1787133600,
+    updated_at: 1787133600,
+  },
+  {
+    id: 102,
+    title: '支付后未立即开通',
+    content: '支付完成后通常会在数秒到数分钟内开通，可前往订单中心查看状态。',
+    tags: ['订单'],
+    popup: false,
+    sort: 6,
+    created_at: 1786701600,
+    updated_at: 1786701600,
+  },
+  {
+    id: 101,
+    title: '多设备使用建议',
+    content: '请根据套餐设备限制合理分配终端，避免多人共享同一订阅。',
+    tags: ['账户'],
+    popup: false,
+    sort: 7,
+    created_at: 1786269600,
+    updated_at: 1786269600,
+  },
 ];
 
 export const mockTickets: Ticket[] = [

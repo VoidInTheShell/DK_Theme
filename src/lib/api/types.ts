@@ -50,6 +50,7 @@ export type SubscribeInfo = {
 
 export type UserCommConfig = {
   self_use_mode?: number | boolean;
+  enable_announcements?: number | boolean;
 };
 
 export type Plan = {
@@ -117,7 +118,20 @@ export type Notice = {
   id: number;
   title: string;
   content: string;
+  img_url?: string | null;
+  tags?: string[];
+  popup: boolean;
+  sort?: number | null;
   created_at?: number;
+  updated_at?: number;
+};
+
+export type NoticePage = {
+  items: Notice[];
+  total: number;
+  current: number;
+  pageSize: number;
+  pageCount: number;
 };
 
 export type Ticket = {

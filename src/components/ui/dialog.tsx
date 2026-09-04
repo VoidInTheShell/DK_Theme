@@ -18,8 +18,8 @@ export function DialogContent({ className, children, ...props }: DialogPrimitive
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className='absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-secondary'>
-          <X className='size-4' />
+        <DialogPrimitive.Close aria-label='关闭弹窗' className='absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-secondary'>
+          <X aria-hidden='true' className='size-4' />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>

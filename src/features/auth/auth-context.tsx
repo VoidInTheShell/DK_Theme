@@ -10,6 +10,7 @@ type AuthContextValue = {
   user: UserInfo | null;
   subscribe: SubscribeInfo | null;
   selfUseMode: boolean;
+  announcementsEnabled: boolean;
   hydrated: boolean;
   login: (values: LoginInput) => Promise<void>;
   logout: () => void;
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [subscribe, setSubscribe] = useState<SubscribeInfo | null>(null);
   const [selfUseMode, setSelfUseMode] = useState(false);
+  const [announcementsEnabled, setAnnouncementsEnabled] = useState(true);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -35,11 +37,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const [nextUser, nextSubscribe, commConfig] = await Promise.all([
           getUserInfo(),
           getSubscribeInfo(),
-          getUserCommConfig().catch(() => ({ self_use_mode: false })),
+          getUserCommConfig().catch(() => ({ self_use_mode: false, enable_announcements: true })),
         ]);
         setUser(nextUser);
         setSubscribe(nextSubscribe);
         setSelfUseMode(Boolean(commConfig.self_use_mode));
+        setAnnouncementsEnabled(commConfig.enable_announcements == null ? true : Boolean(commConfig.enable_announcements));
         setToken(currentToken);
       } finally {
         setHydrated(true);
@@ -54,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     subscribe,
     selfUseMode,
+    announcementsEnabled,
     hydrated,
     async login(values) {
       const response = await loginRequest(values);
@@ -62,11 +66,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const [nextUser, nextSubscribe, commConfig] = await Promise.all([
         getUserInfo(),
         getSubscribeInfo(),
-        getUserCommConfig().catch(() => ({ self_use_mode: false })),
+        getUserCommConfig().catch(() => ({ self_use_mode: false, enable_announcements: true })),
       ]);
       setUser(nextUser);
       setSubscribe(nextSubscribe);
       setSelfUseMode(Boolean(commConfig.self_use_mode));
+      setAnnouncementsEnabled(commConfig.enable_announcements == null ? true : Boolean(commConfig.enable_announcements));
     },
     logout() {
       void logoutRequest();
@@ -74,10 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSubscribe(null);
       setSelfUseMode(false);
+      setAnnouncementsEnabled(true);
       setHydrated(true);
       toast.success('已退出登录');
     },
-  }), [hydrated, selfUseMode, subscribe, token, user]);
+  }), [announcementsEnabled, hydrated, selfUseMode, subscribe, token, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

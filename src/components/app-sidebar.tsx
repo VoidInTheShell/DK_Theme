@@ -2,6 +2,7 @@ import * as React from "react"
 import { Link, useNavigate } from 'react-router-dom'
 import {
   IconBook,
+  IconBell,
   IconBrandTelegram,
   IconCreditCard,
   IconDashboard,
@@ -142,7 +143,7 @@ function SupportDialog({
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { logout, selfUseMode, user } = useAuth()
+  const { announcementsEnabled, logout, selfUseMode, user } = useAuth()
   const [supportOpen, setSupportOpen] = React.useState(false)
   const useRestrictedNavigation = selfUseMode && !user?.is_admin && !user?.is_staff
 
@@ -180,6 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               ? [{ title: "配额信息", url: "/quota", icon: IconGauge }]
               : [{ title: "订购套餐", url: "/plans", icon: IconCreditCard }]),
             { title: "节点状态", url: "/node-status", icon: IconRoute },
+            ...(announcementsEnabled ? [{ title: "系统公告", url: "/announcements", icon: IconBell }] : []),
             ...(!useRestrictedNavigation
               ? [
                   { title: "订单中心", url: "/orders", icon: IconReceipt },

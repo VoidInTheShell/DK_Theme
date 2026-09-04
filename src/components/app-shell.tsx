@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AppSidebar } from '@/components/app-sidebar';
+import { AnnouncementPopup } from '@/features/announcements/announcement-popup';
 import { RouteChunkErrorBoundary } from '@/components/route-chunk-error-boundary';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -21,6 +22,7 @@ export function AppShell() {
       }}
     >
       <AppSidebar variant='inset' />
+      <AnnouncementPopup />
       <SidebarInset className='min-w-0 overflow-x-hidden'>
         <SiteHeader />
         <div className='flex min-w-0 flex-1 flex-col'>
