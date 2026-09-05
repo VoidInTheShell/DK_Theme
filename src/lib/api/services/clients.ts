@@ -5,6 +5,7 @@ export type ClientCatalogScopeData = {
   device_type: 'desktop' | 'mobile'
   platform: 'windows' | 'mac-intel' | 'mac-apple-silicon' | 'linux' | 'ios' | 'android'
   sort_order: number
+  is_default?: boolean
 }
 
 export type ClientCatalogItemData = {
@@ -24,8 +25,19 @@ export type ClientCatalogItemData = {
   scopes: ClientCatalogScopeData[]
 }
 
+export type ClientCatalogPlatformDefaultData = {
+  device_type: 'desktop' | 'mobile'
+  platform: ClientCatalogScopeData['platform']
+  client_app_id: number | null
+  client_slug?: string | null
+  client_name?: string | null
+  is_manual: boolean
+  is_fallback: boolean
+}
+
 export type ClientCatalogData = {
   clients: ClientCatalogItemData[]
+  platform_defaults?: ClientCatalogPlatformDefaultData[]
   templates: string[]
   device_platforms: Record<string, string[]>
 }

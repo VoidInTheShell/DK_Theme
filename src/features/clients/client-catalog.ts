@@ -39,6 +39,7 @@ export type ClientScope = {
   deviceType: DeviceType
   platform: PlatformFilter
   sortOrder: number
+  isDefault?: boolean
 }
 
 export const platformLabels: Record<PlatformFilter, string> = {
@@ -310,6 +311,7 @@ export function normalizeCatalogClient(client: ClientCatalogItemData): ClientIte
     deviceType: scope.device_type,
     platform: scope.platform,
     sortOrder: scope.sort_order,
+    isDefault: scope.is_default === true,
   }))
   const deviceTypes = [...new Set(scopes.map((scope) => scope.deviceType))]
   const platforms = [...new Set(scopes.map((scope) => scope.platform))]
