@@ -1,6 +1,6 @@
 # DK Theme staging image
 
-Every pushed branch builds and publishes a multi-architecture nginx image as `ghcr.io/voidintheshell/dk_theme`. Pushes to `main`, `master`, `dev`, and `new-dev`, plus opt-in `staging/**` branches, deploy automatically; other branches deploy only when `workflow_dispatch` is run on that branch. The image contains the Vite output under `/dk-theme/` and a root SPA entrypoint.
+Every pushed branch builds and publishes a multi-architecture nginx image as `ghcr.io/voidintheshell/dk_theme`. Pushes to `dev` deploy automatically; other branches deploy only when `workflow_dispatch` is run on that branch. After feature-branch acceptance, dispatch `dev` again to restore the shared development baseline. The image contains the Vite output under `/dk-theme/` and a root SPA entrypoint.
 
 The nginx routing contract is intentionally split:
 
@@ -22,4 +22,4 @@ Required environment variables:
 - `STAGING_SSH_USER`
 - `STAGING_PANEL_URL`
 
-If Xboard has not been deployed yet, the theme workflow only pulls and caches the exact image. Run the Xboard `master` deployment afterward to create the full stack.
+If Xboard has not been deployed yet, the theme workflow only pulls and caches the exact image. Run the Xboard `dev` deployment afterward to create the full stack.
