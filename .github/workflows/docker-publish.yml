@@ -296,24 +296,7 @@ jobs:
           printf '%s\n' "${GHCR_TOKEN}" | ssh "${SSH_ARGS[@]}" "${SSH_TARGET}" \
             "deploy-theme ${GITHUB_SHA} ${THEME_IMAGE} ${GITHUB_ACTOR}"
 
-      - name: Verify public production theme
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          logo_file=$(mktemp)
-          admin_page=$(mktemp)
-          trap 'rm -f -- "${logo_file}" "${admin_page}"' EXIT
-          curl --fail --silent --show-error --retry 12 --retry-all-errors --retry-delay 5 "${PANEL_URL}/healthz" > /dev/null
-          logo_type=$(curl --fail --silent --show-error --retry 8 --retry-all-errors --retry-delay 5 \
-            --output "${logo_file}" --write-out '%{content_type}' "${PANEL_URL}/dk-theme/ueg-mark.png")
-          test -s "${logo_file}"
-          case "${logo_type}" in image/png*) ;; *) exit 1 ;; esac
-          curl --fail --silent --show-error --retry 8 --retry-all-errors --retry-delay 5 \
-            "${PANEL_URL}/${ADMIN_PATH}" > "${admin_page}"
-          grep --fixed-strings '<title>XBoard</title>' "${admin_page}" > /dev/null
-          grep --fixed-strings '/assets/admin/' "${admin_page}" > /dev/null
-
-      - name: Verify protected production runtime
+      - name: Verify public theme and protected runtime from JPGREEN
         shell: bash
         run: |
           set -Eeuo pipefail

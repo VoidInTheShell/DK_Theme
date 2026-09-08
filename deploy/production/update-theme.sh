@@ -4,6 +4,8 @@ set -Eeuo pipefail
 TARGET_DIR="/home/beihai/docker/xboard"
 EXPECTED_TARGET="/home/beihai/docker/xboard"
 THEME_REPOSITORY="https://github.com/VoidInTheShell/DK_Theme.git"
+BUNKERWEB="bunkerweb-bunkerweb-1"
+PANEL_HOST="panel.uegov.org"
 GIT_SHA="${1:-}"
 THEME_IMAGE="${2:-}"
 REGISTRY_USER="${3:-}"
@@ -31,6 +33,20 @@ set_env_value() {
     ' "$file" > "$temp_file"
     install -o root -g root -m 600 "$temp_file" "$file"
     rm -f "$temp_file"
+}
+
+refresh_bunkerweb_upstream() {
+    [ "$(docker inspect --format '{{.State.Status}}' "$BUNKERWEB" 2>/dev/null || true)" = "running" ] || fail "$BUNKERWEB is not running"
+    docker exec "$BUNKERWEB" nginx -t >/dev/null
+    docker exec "$BUNKERWEB" nginx -s reload >/dev/null
+    for _ in $(seq 1 30); do
+        if curl --fail --silent --show-error --resolve "$PANEL_HOST:443:127.0.0.1" "https://$PANEL_HOST/healthz" >/dev/null; then
+            log "BunkerWeb resolved the current theme upstream"
+            return 0
+        fi
+        sleep 2
+    done
+    fail "BunkerWeb did not converge on the current theme upstream"
 }
 
 [ "$(id -u)" = "0" ] || fail "this trusted deployment script must run as root"
@@ -74,6 +90,7 @@ for _ in $(seq 1 45); do
     status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' xboard-theme 2>/dev/null || true)
     if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
         docker exec xboard-theme wget -q -O /dev/null http://127.0.0.1/healthz
+        refresh_bunkerweb_upstream
         log "production theme deployment complete"
         compose ps theme
         exit 0
