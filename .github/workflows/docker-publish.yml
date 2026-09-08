@@ -63,9 +63,9 @@ jobs:
             --build-arg VITE_ENABLE_MOCK=false \
             --tag dk-theme-ci:${GITHUB_SHA} \
             .
-          docker run --rm --add-host xboard-app:127.0.0.1 dk-theme-ci:${GITHUB_SHA} nginx -t
+          docker run --rm --add-host xboard-app:127.0.0.1 --add-host xboard-admin:127.0.0.1 dk-theme-ci:${GITHUB_SHA} nginx -t
           docker run --rm --entrypoint sh dk-theme-ci:${GITHUB_SHA} -ec \
-            "test -s /usr/share/nginx/html/dk-theme/ueg-mark.png && grep -F unitedearthgov /etc/nginx/conf.d/default.conf > /dev/null"
+            "test -s /usr/share/nginx/html/dk-theme/ueg-mark.png && grep -F 'proxy_pass http://xboard-admin:80;' /etc/nginx/conf.d/default.conf > /dev/null"
 
   build-and-push:
     name: Publish multi-architecture image
@@ -225,8 +225,9 @@ jobs:
           esac
           curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
             "${PANEL_URL}/${ADMIN_PATH}" > "${admin_page}"
-          grep --fixed-strings '<title>XBoard</title>' "${admin_page}" > /dev/null
-          grep --fixed-strings '/assets/admin/' "${admin_page}" > /dev/null
+          grep --fixed-strings '<title>XBoard Admin</title>' "${admin_page}" > /dev/null
+          grep --fixed-strings 'data-xboard-admin-shell="standalone"' "${admin_page}" > /dev/null
+          grep --fixed-strings '/unitedearthgov/assets/' "${admin_page}" > /dev/null
 
       - name: Remove deployment bundle
         if: always()
