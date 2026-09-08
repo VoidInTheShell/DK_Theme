@@ -255,15 +255,11 @@ jobs:
       SSH_USER: ${{ vars.PRODUCTION_SSH_USER }}
       PANEL_URL: ${{ vars.PRODUCTION_PANEL_URL }}
       ADMIN_PATH: ${{ vars.PRODUCTION_ADMIN_PATH }}
-      SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+      DEPLOY_SSH_KEY: ${{ secrets.PRODUCTION_DEPLOY_SSH_KEY }}
       SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
       GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       THEME_IMAGE: ghcr.io/voidintheshell/dk_theme@${{ needs.build-and-push.outputs.digest }}
-      REMOTE_BUNDLE: /home/beihai/docker/.incoming/dk-theme-production-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
-      - name: Checkout production deployment script
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
       - name: Validate production configuration
         shell: bash
         run: |
@@ -273,10 +269,11 @@ jobs:
           : "${SSH_USER:?PRODUCTION_SSH_USER is required}"
           : "${PANEL_URL:?PRODUCTION_PANEL_URL is required}"
           : "${ADMIN_PATH:?PRODUCTION_ADMIN_PATH is required}"
-          : "${SSH_PRIVATE_KEY:?PRODUCTION_SSH_PRIVATE_KEY is required}"
+          : "${DEPLOY_SSH_KEY:?PRODUCTION_DEPLOY_SSH_KEY is required}"
           : "${SSH_KNOWN_HOSTS:?PRODUCTION_SSH_KNOWN_HOSTS is required}"
           test "${PANEL_URL}" = 'https://panel.uegov.org'
           test "${ADMIN_PATH}" = 'unitedearthgov'
+          test "${SSH_USER}" = 'xboard-ci'
           [[ "${THEME_IMAGE}" =~ ^ghcr\.io/voidintheshell/dk_theme@sha256:[0-9a-f]{64}$ ]]
 
       - name: Prepare SSH
@@ -286,22 +283,18 @@ jobs:
           umask 077
           SSH_DIR="${RUNNER_TEMP}/deploy-ssh"
           install -d -m 700 "${SSH_DIR}"
-          printf '%s\n' "${SSH_PRIVATE_KEY}" > "${SSH_DIR}/id_ed25519"
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > "${SSH_DIR}/id_ed25519"
           printf '%s\n' "${SSH_KNOWN_HOSTS}" > "${SSH_DIR}/known_hosts"
 
-      - name: Upload and deploy production theme
+      - name: Deploy production theme through the forced command
         shell: bash
         run: |
           set -Eeuo pipefail
           SSH_DIR="${RUNNER_TEMP}/deploy-ssh"
           SSH_TARGET="${SSH_USER}@${SSH_HOST}"
           SSH_ARGS=(-i "${SSH_DIR}/id_ed25519" -p "${SSH_PORT}" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=${SSH_DIR}/known_hosts")
-          SCP_ARGS=(-i "${SSH_DIR}/id_ed25519" -P "${SSH_PORT}" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=${SSH_DIR}/known_hosts")
-
-          ssh "${SSH_ARGS[@]}" "${SSH_TARGET}" "install -d -m 700 '${REMOTE_BUNDLE}'"
-          scp "${SCP_ARGS[@]}" deploy/production/update-theme.sh "${SSH_TARGET}:${REMOTE_BUNDLE}/update-theme.sh"
           printf '%s\n' "${GHCR_TOKEN}" | ssh "${SSH_ARGS[@]}" "${SSH_TARGET}" \
-            "chmod 700 '${REMOTE_BUNDLE}/update-theme.sh' && '${REMOTE_BUNDLE}/update-theme.sh' '${THEME_IMAGE}' '${GITHUB_ACTOR}'"
+            "deploy-theme ${GITHUB_SHA} ${THEME_IMAGE} ${GITHUB_ACTOR}"
 
       - name: Verify public production theme
         shell: bash
@@ -320,15 +313,20 @@ jobs:
           grep --fixed-strings '<title>XBoard</title>' "${admin_page}" > /dev/null
           grep --fixed-strings '/assets/admin/' "${admin_page}" > /dev/null
 
-      - name: Remove production deployment bundle
+      - name: Verify protected production runtime
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          SSH_DIR="${RUNNER_TEMP}/deploy-ssh"
+          SSH_TARGET="${SSH_USER}@${SSH_HOST}"
+          SSH_ARGS=(-i "${SSH_DIR}/id_ed25519" -p "${SSH_PORT}" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=${SSH_DIR}/known_hosts")
+          ssh "${SSH_ARGS[@]}" "${SSH_TARGET}" verify-theme
+
+      - name: Remove the ephemeral deploy identity
         if: always()
         continue-on-error: true
         shell: bash
         run: |
           set +e
           SSH_DIR="${RUNNER_TEMP}/deploy-ssh"
-          if [ -f "${SSH_DIR}/id_ed25519" ] && [ -n "${SSH_HOST:-}" ] && [ -n "${REMOTE_BUNDLE:-}" ]; then
-            ssh -i "${SSH_DIR}/id_ed25519" -p "${SSH_PORT}" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=${SSH_DIR}/known_hosts" "${SSH_USER}@${SSH_HOST}" \
-              "case '${REMOTE_BUNDLE}' in /home/beihai/docker/.incoming/dk-theme-production-*) rm -rf -- '${REMOTE_BUNDLE}' ;; *) exit 1 ;; esac"
-          fi
           rm -rf -- "${SSH_DIR}"

@@ -3,8 +3,10 @@ set -Eeuo pipefail
 
 TARGET_DIR="/home/beihai/docker/xboard"
 EXPECTED_TARGET="/home/beihai/docker/xboard"
-THEME_IMAGE="${1:-}"
-REGISTRY_USER="${2:-}"
+THEME_REPOSITORY="https://github.com/VoidInTheShell/DK_Theme.git"
+GIT_SHA="${1:-}"
+THEME_IMAGE="${2:-}"
+REGISTRY_USER="${3:-}"
 
 log() {
     printf '[production-theme] %s\n' "$*"
@@ -27,15 +29,20 @@ set_env_value() {
         { print }
         END { if (!found) print key "=" value }
     ' "$file" > "$temp_file"
-    install -m 600 "$temp_file" "$file"
+    install -o root -g root -m 600 "$temp_file" "$file"
     rm -f "$temp_file"
 }
 
-[[ "$THEME_IMAGE" =~ ^ghcr\.io/voidintheshell/dk_theme@sha256:[0-9a-f]{64}$ ]] || fail "theme image must be an immutable DK Theme GHCR digest"
-[ -n "$REGISTRY_USER" ] || fail "registry user argument is required"
+[ "$(id -u)" = "0" ] || fail "this trusted deployment script must run as root"
+[[ "$GIT_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "the release SHA is invalid"
+[[ "$THEME_IMAGE" =~ ^ghcr\.io/voidintheshell/dk_theme@sha256:[0-9a-f]{64}$ ]] || fail "theme image must be an immutable DK Theme digest"
+[[ "$REGISTRY_USER" =~ ^[A-Za-z0-9-]{1,39}$ ]] || fail "the registry user is invalid"
 [ "$(realpath -m "$TARGET_DIR")" = "$EXPECTED_TARGET" ] || fail "unexpected target directory"
 [ -f "$TARGET_DIR/compose.yaml" ] || fail "the production panel Compose file is not installed"
 [ -f "$TARGET_DIR/.deploy.env" ] || fail "the production panel environment is not installed"
+
+CURRENT_SHA=$(git ls-remote --exit-code --refs "$THEME_REPOSITORY" refs/heads/main | awk 'NR == 1 { print $1 }')
+[ "$GIT_SHA" = "$CURRENT_SHA" ] || fail "release SHA is not the current DK Theme main"
 
 IFS= read -r REGISTRY_TOKEN || true
 [ -n "${REGISTRY_TOKEN:-}" ] || fail "registry token was not provided on stdin"
@@ -46,25 +53,27 @@ log "acquired production deployment lock"
 
 AUTH_DIR=$(mktemp -d "/tmp/dk-theme-production-auth.XXXXXX")
 cleanup() {
-    sudo -n rm -rf -- "$AUTH_DIR"
+    rm -rf -- "$AUTH_DIR"
     unset REGISTRY_TOKEN
 }
 trap cleanup EXIT
 
-printf '%s\n' "$REGISTRY_TOKEN" | sudo -n docker --config "$AUTH_DIR" login ghcr.io --username "$REGISTRY_USER" --password-stdin >/dev/null
+printf '%s\n' "$REGISTRY_TOKEN" | docker --config "$AUTH_DIR" login ghcr.io --username "$REGISTRY_USER" --password-stdin >/dev/null
 unset REGISTRY_TOKEN
-sudo -n docker --config "$AUTH_DIR" pull "$THEME_IMAGE"
+docker --config "$AUTH_DIR" pull "$THEME_IMAGE"
+IMAGE_SHA=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$THEME_IMAGE" 2>/dev/null || true)
+[ "$IMAGE_SHA" = "$GIT_SHA" ] || fail "theme image revision does not match main"
 
 set_env_value "$TARGET_DIR/.deploy.env" "DK_THEME_IMAGE" "$THEME_IMAGE"
 compose() {
-    sudo -n docker compose --env-file "$TARGET_DIR/.deploy.env" -f "$TARGET_DIR/compose.yaml" "$@"
+    docker compose --env-file "$TARGET_DIR/.deploy.env" -f "$TARGET_DIR/compose.yaml" "$@"
 }
 
 compose up -d --no-deps theme
 for _ in $(seq 1 45); do
-    status=$(sudo -n docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' xboard-theme 2>/dev/null || true)
+    status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' xboard-theme 2>/dev/null || true)
     if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
-        sudo -n docker exec xboard-theme wget -q -O /dev/null http://127.0.0.1/healthz
+        docker exec xboard-theme wget -q -O /dev/null http://127.0.0.1/healthz
         log "production theme deployment complete"
         compose ps theme
         exit 0
