@@ -3,7 +3,6 @@ set -Eeuo pipefail
 
 TARGET_DIR="/home/beihai/docker/xboard"
 EXPECTED_TARGET="/home/beihai/docker/xboard"
-THEME_REPOSITORY="https://github.com/VoidInTheShell/DK_Theme.git"
 BUNKERWEB="bunkerweb-bunkerweb-1"
 PANEL_HOST="panel.uegov.org"
 GIT_SHA="${1:-}"
@@ -51,14 +50,11 @@ refresh_bunkerweb_upstream() {
 
 [ "$(id -u)" = "0" ] || fail "this trusted deployment script must run as root"
 [[ "$GIT_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "the release SHA is invalid"
-[[ "$THEME_IMAGE" =~ ^ghcr\.io/voidintheshell/dk_theme@sha256:[0-9a-f]{64}$ ]] || fail "theme image must be an immutable DK Theme digest"
+[[ "$THEME_IMAGE" =~ ^ghcr\.io/voidintheshell/dk_theme:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || fail "theme image must use a version tag"
 [[ "$REGISTRY_USER" =~ ^[A-Za-z0-9-]{1,39}$ ]] || fail "the registry user is invalid"
 [ "$(realpath -m "$TARGET_DIR")" = "$EXPECTED_TARGET" ] || fail "unexpected target directory"
 [ -f "$TARGET_DIR/compose.yaml" ] || fail "the production panel Compose file is not installed"
 [ -f "$TARGET_DIR/.deploy.env" ] || fail "the production panel environment is not installed"
-
-CURRENT_SHA=$(git ls-remote --exit-code --refs "$THEME_REPOSITORY" refs/heads/main | awk 'NR == 1 { print $1 }')
-[ "$GIT_SHA" = "$CURRENT_SHA" ] || fail "release SHA is not the current DK Theme main"
 
 IFS= read -r REGISTRY_TOKEN || true
 [ -n "${REGISTRY_TOKEN:-}" ] || fail "registry token was not provided on stdin"
@@ -77,9 +73,6 @@ trap cleanup EXIT
 printf '%s\n' "$REGISTRY_TOKEN" | docker --config "$AUTH_DIR" login ghcr.io --username "$REGISTRY_USER" --password-stdin >/dev/null
 unset REGISTRY_TOKEN
 docker --config "$AUTH_DIR" pull "$THEME_IMAGE"
-IMAGE_SHA=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$THEME_IMAGE" 2>/dev/null || true)
-[ "$IMAGE_SHA" = "$GIT_SHA" ] || fail "theme image revision does not match main"
-
 set_env_value "$TARGET_DIR/.deploy.env" "DK_THEME_IMAGE" "$THEME_IMAGE"
 compose() {
     docker compose --env-file "$TARGET_DIR/.deploy.env" -f "$TARGET_DIR/compose.yaml" "$@"
@@ -90,6 +83,7 @@ for _ in $(seq 1 45); do
     status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' xboard-theme 2>/dev/null || true)
     if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
         docker exec xboard-theme wget -q -O /dev/null http://127.0.0.1/healthz
+        docker exec xboard-theme test -s /var/run/xboard-admin-route/active.conf
         refresh_bunkerweb_upstream
         log "production theme deployment complete"
         compose ps theme

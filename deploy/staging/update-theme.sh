@@ -34,6 +34,7 @@ set_env_value() {
 [ -n "$THEME_IMAGE" ] || fail "theme image argument is required"
 [ -n "$REGISTRY_USER" ] || fail "registry user argument is required"
 [ "$(realpath -m "$TARGET_DIR")" = "$EXPECTED_TARGET" ] || fail "unexpected target directory"
+[[ "$THEME_IMAGE" =~ ^ghcr\.io/voidintheshell/dk_theme:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || fail "theme image must be a DK Theme GHCR image with a version tag"
 
 IFS= read -r REGISTRY_TOKEN || true
 [ -n "${REGISTRY_TOKEN:-}" ] || fail "registry token was not provided on stdin"
@@ -71,6 +72,10 @@ for _ in $(seq 1 45); do
     status=$(sudo -n docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' xboard-theme 2>/dev/null || true)
     if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
         sudo -n docker exec xboard-theme wget -q -O /dev/null http://127.0.0.1/healthz
+        active_path=$(sudo -n docker exec xboard-theme cat /var/run/xboard-admin-route/active-path)
+        printf '%s' "$active_path" | grep -Eq '^[A-Za-z0-9_-]{8,}$'
+        [ "$active_path" != "passport" ]
+        sudo -n docker exec xboard-theme test -s /var/run/xboard-admin-route/active.conf
         sudo -n docker image prune -f >/dev/null
         log "theme deployment complete: $THEME_IMAGE"
         compose ps theme

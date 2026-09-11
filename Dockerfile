@@ -22,8 +22,13 @@ RUN npm run build
 FROM nginx:1.28-alpine
 
 COPY deploy/staging/nginx.conf /etc/nginx/conf.d/default.conf
+COPY deploy/staging/admin-route.conf.template /usr/local/share/xboard-admin-route.conf.template
+COPY --chmod=755 deploy/staging/admin-route-sync.sh /usr/local/bin/xboard-admin-route-sync
 COPY --from=builder /app/dist /usr/share/nginx/html/dk-theme
 COPY --from=builder /app/dist/index.html /usr/share/nginx/html/index.html
+
+ENTRYPOINT ["/usr/local/bin/xboard-admin-route-sync"]
+CMD ["nginx", "-g", "daemon off;"]
 
 EXPOSE 80
 

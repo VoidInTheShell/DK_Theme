@@ -47,12 +47,15 @@ jobs:
           VITE_ENABLE_MOCK: "false"
         run: npm run build
 
-      - name: Validate staged brand asset and administrator route
+      - name: Validate staged brand asset and administrator route synchronizer
         run: |
           set -Eeuo pipefail
           test -s dist/ueg-mark.png
           grep -R --fixed-strings '/dk-theme/ueg-mark.png' dist/index.html dist/assets > /dev/null
-          grep --fixed-strings 'unitedearthgov' deploy/staging/nginx.conf > /dev/null
+          grep --fixed-strings 'xboard-admin-route' deploy/staging/nginx.conf > /dev/null
+          grep --fixed-strings '__ADMIN_PATH__' deploy/staging/admin-route.conf.template > /dev/null
+          grep --fixed-strings 'xboard-admin:80' deploy/staging/admin-route.conf.template > /dev/null
+          bash -n deploy/staging/admin-route-sync.sh
           bash -n deploy/staging/update-theme.sh
           bash -n deploy/production/update-theme.sh
 
@@ -67,7 +70,7 @@ jobs:
             .
           docker run --rm --add-host xboard-app:127.0.0.1 dk-theme-ci:${GITHUB_SHA} nginx -t
           docker run --rm --entrypoint sh dk-theme-ci:${GITHUB_SHA} -ec \
-            "test -s /usr/share/nginx/html/dk-theme/ueg-mark.png && grep -F unitedearthgov /etc/nginx/conf.d/default.conf > /dev/null"
+            "test -s /usr/share/nginx/html/dk-theme/ueg-mark.png && test -x /usr/local/bin/xboard-admin-route-sync && grep -F xboard-admin-route /etc/nginx/conf.d/default.conf > /dev/null"
 
   build-and-push:
     name: Publish multi-architecture image
@@ -78,7 +81,7 @@ jobs:
       contents: read
       packages: write
     outputs:
-      digest: ${{ steps.push.outputs.digest }}
+      image_tag: build-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -102,6 +105,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=build-${{ github.run_id }}-${{ github.run_attempt }}
             type=sha,format=long,prefix=sha-
             type=ref,event=branch
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
@@ -127,6 +131,14 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: true
 
+      - name: Report staging image tag
+        env:
+          IMAGE_TAG: build-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          image="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+          echo "Published staging image: ${image}"
+          printf 'Staging image: `%s`\n' "${image}" >> "$GITHUB_STEP_SUMMARY"
+
   deploy-staging:
     name: Update GJHK staging theme
     if: >-
@@ -151,11 +163,10 @@ jobs:
       SSH_PORT: ${{ vars.STAGING_SSH_PORT }}
       SSH_USER: ${{ vars.STAGING_SSH_USER }}
       PANEL_URL: ${{ vars.STAGING_PANEL_URL }}
-      ADMIN_PATH: ${{ vars.STAGING_ADMIN_PATH }}
       SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
       SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
       GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      THEME_IMAGE: ghcr.io/voidintheshell/dk_theme@${{ needs.build-and-push.outputs.digest }}
+      THEME_IMAGE: ghcr.io/voidintheshell/dk_theme:${{ needs.build-and-push.outputs.image_tag }}
       REMOTE_BUNDLE: /home/beihai/docker/.incoming/dk-theme-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Checkout deployment script
@@ -169,11 +180,10 @@ jobs:
           : "${SSH_PORT:?STAGING_SSH_PORT is required}"
           : "${SSH_USER:?STAGING_SSH_USER is required}"
           : "${PANEL_URL:?STAGING_PANEL_URL is required}"
-          : "${ADMIN_PATH:?STAGING_ADMIN_PATH is required}"
           : "${SSH_PRIVATE_KEY:?STAGING_SSH_PRIVATE_KEY is required}"
           : "${SSH_KNOWN_HOSTS:?STAGING_SSH_KNOWN_HOSTS is required}"
-          if [ "${ADMIN_PATH}" != 'unitedearthgov' ]; then
-            echo "STAGING_ADMIN_PATH must be unitedearthgov for this project" >&2
+          if ! [[ "${THEME_IMAGE}" =~ ^ghcr\.io/voidintheshell/dk_theme:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+            echo "THEME_IMAGE must be a DK Theme GHCR image with a version tag" >&2
             exit 1
           fi
 
@@ -208,7 +218,8 @@ jobs:
           curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 "${PANEL_URL}/" > /dev/null
           logo_file=$(mktemp)
           admin_page=$(mktemp)
-          trap 'rm -f -- "${logo_file}" "${admin_page}"' EXIT
+          original_admin_page=$(mktemp)
+          trap 'rm -f -- "${logo_file}" "${admin_page}" "${original_admin_page}"' EXIT
           logo_type=$(curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
             --output "${logo_file}" --write-out '%{content_type}' "${PANEL_URL}/dk-theme/ueg-mark.png")
           test -s "${logo_file}"
@@ -216,10 +227,19 @@ jobs:
             image/png*) ;;
             *) echo "Unexpected brand mark content type: ${logo_type}" >&2; exit 1 ;;
           esac
+          SSH_DIR="${RUNNER_TEMP}/deploy-ssh"
+          SSH_TARGET="${SSH_USER}@${SSH_HOST}"
+          SSH_ARGS=(-i "${SSH_DIR}/id_ed25519" -p "${SSH_PORT}" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=${SSH_DIR}/known_hosts")
+          active_path=$(ssh "${SSH_ARGS[@]}" "${SSH_TARGET}" "sudo -n docker exec xboard-theme cat /var/run/xboard-admin-route/active-path")
+          [[ "${active_path}" =~ ^[A-Za-z0-9_-]{8,}$ && "${active_path}" != "passport" ]]
           curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
-            "${PANEL_URL}/${ADMIN_PATH}" > "${admin_page}"
-          grep --fixed-strings '<title>XBoard</title>' "${admin_page}" > /dev/null
-          grep --fixed-strings '/assets/admin/' "${admin_page}" > /dev/null
+            "${PANEL_URL}/${active_path}/" > "${admin_page}"
+          grep --fixed-strings '<title>XBoard Admin</title>' "${admin_page}" > /dev/null
+          grep --fixed-strings 'data-xboard-admin-shell="standalone"' "${admin_page}" > /dev/null
+          curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
+            "${PANEL_URL}/${active_path}/original" > "${original_admin_page}"
+          grep --fixed-strings '<title>XBoard</title>' "${original_admin_page}" > /dev/null
+          grep --fixed-strings '/assets/admin/' "${original_admin_page}" > /dev/null
 
       - name: Remove deployment bundle
         if: always()
@@ -237,7 +257,7 @@ jobs:
     name: Update JPGREEN production theme
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      github.event_name == 'workflow_dispatch'
     needs: build-and-push
     runs-on: ubuntu-latest
     concurrency:
@@ -258,7 +278,7 @@ jobs:
       DEPLOY_SSH_KEY: ${{ secrets.PRODUCTION_DEPLOY_SSH_KEY }}
       SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
       GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      THEME_IMAGE: ghcr.io/voidintheshell/dk_theme@${{ needs.build-and-push.outputs.digest }}
+      THEME_IMAGE: ghcr.io/voidintheshell/dk_theme:${{ needs.build-and-push.outputs.image_tag }}
     steps:
       - name: Validate production configuration
         shell: bash
@@ -274,7 +294,7 @@ jobs:
           test "${PANEL_URL}" = 'https://panel.uegov.org'
           test "${ADMIN_PATH}" = 'unitedearthgov'
           test "${SSH_USER}" = 'xboard-ci'
-          [[ "${THEME_IMAGE}" =~ ^ghcr\.io/voidintheshell/dk_theme@sha256:[0-9a-f]{64}$ ]]
+          [[ "${THEME_IMAGE}" =~ ^ghcr\.io/voidintheshell/dk_theme:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]
 
       - name: Prepare SSH
         shell: bash

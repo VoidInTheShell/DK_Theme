@@ -1,0 +1,37 @@
+# This file is rendered by xboard-admin-route-sync. Do not expose the Xboard
+# internal endpoints directly from the public server block.
+location = /__ADMIN_PATH__ {
+    return 308 /__ADMIN_PATH__/;
+}
+
+# The built-in Xboard panel remains a deliberate compatibility action only.
+location = /__ADMIN_PATH__/original {
+    proxy_pass http://xboard-app:7001/_internal/standalone-admin/original;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $forwarded_proto;
+    proxy_set_header X-Xboard-Admin-Route-Token "__ADMIN_ROUTE_TOKEN__";
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+}
+
+location ^~ /__ADMIN_PATH__/original/ {
+    return 404;
+}
+
+# All normal administrator navigation remains in the dedicated Xboard-Admin
+# container, including SPA history routes and relative static assets.
+location ^~ /__ADMIN_PATH__/ {
+    proxy_pass http://xboard-admin:80;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $forwarded_proto;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+}
