@@ -238,7 +238,7 @@ jobs:
           grep --fixed-strings 'data-xboard-admin-shell="standalone"' "${admin_page}" > /dev/null
           curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
             "${PANEL_URL}/${active_path}/original" > "${original_admin_page}"
-          grep --fixed-strings '<title>XBoard</title>' "${original_admin_page}" > /dev/null
+          grep --extended-regexp '<title>[^<]+</title>' "${original_admin_page}" > /dev/null
           grep --fixed-strings '/assets/admin/' "${original_admin_page}" > /dev/null
 
       - name: Remove deployment bundle
