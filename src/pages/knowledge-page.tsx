@@ -122,73 +122,207 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-function renderInlineKnowledgeText(text: string) {
-  const pattern = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g
-  const nodes: Array<string | ReactNode> = []
+function isSafeKnowledgeHref(href: string) {
+  if (href.startsWith('#') || href.startsWith('/')) return true
+
+  try {
+    const url = new URL(href)
+    return ['http:', 'https:', 'mailto:'].includes(url.protocol)
+  } catch {
+    return false
+  }
+}
+
+function renderInlineKnowledgeText(text: string): ReactNode {
+  const pattern = /(`[^`]+`)|(\[([^\]]+)\]\(([^)\s]+)\))|(\*\*([^*]+)\*\*)|(__(.+?)__)|(\*([^*]+)\*)|(_([^_]+)_)/g
+  const nodes: ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null
 
   while ((match = pattern.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(text.slice(lastIndex, match.index))
-    }
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index))
 
-    nodes.push(
-      <a
-        key={`${match[2]}-${match.index}`}
-        href={match[2]}
-        target='_blank'
-        rel='noreferrer'
-        className='font-medium text-primary underline underline-offset-4 hover:opacity-80'
-      >
-        {match[1]}
-      </a>,
-    )
+    if (match[1]) {
+      nodes.push(
+        <code key={`code-${match.index}`} className='rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.9em] text-foreground'>
+          {match[1].slice(1, -1)}
+        </code>,
+      )
+    } else if (match[2]) {
+      const label = match[3]
+      const href = match[4]
+      nodes.push(
+        isSafeKnowledgeHref(href) ? (
+          <a
+            key={`link-${match.index}`}
+            href={href}
+            target='_blank'
+            rel='noreferrer'
+            className='font-medium text-primary underline underline-offset-4 hover:opacity-80'
+          >
+            {label}
+          </a>
+        ) : (
+          label
+        ),
+      )
+    } else if (match[6] || match[8]) {
+      nodes.push(<strong key={`bold-${match.index}`} className='font-semibold text-foreground'>{match[6] ?? match[8]}</strong>)
+    } else {
+      nodes.push(<em key={`italic-${match.index}`}>{match[10] ?? match[12]}</em>)
+    }
 
     lastIndex = pattern.lastIndex
   }
 
-  if (lastIndex < text.length) {
-    nodes.push(text.slice(lastIndex))
-  }
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex))
+  return nodes.length ? nodes : text
+}
 
-  return nodes.length > 0 ? nodes : text
+function isKnowledgeBlockStart(line: string) {
+  return (
+    line.startsWith('```') ||
+    /^(#{1,6})\s+/.test(line) ||
+    /^(---|\*\*\*|___)$/.test(line) ||
+    line.startsWith('>') ||
+    /^[-*+]\s+/.test(line) ||
+    /^\d+\.\s+/.test(line) ||
+    /^[^[]+[：:]$/.test(line)
+  )
+}
+
+function renderKnowledgeHeading(level: number, content: string, key: number) {
+  const className = cn(
+    'font-semibold tracking-tight text-slate-900 dark:text-foreground',
+    level === 1 && 'text-2xl',
+    level === 2 && 'text-xl',
+    level === 3 && 'text-lg',
+    level >= 4 && 'text-base',
+  )
+
+  if (level === 1) return <h1 key={`heading-${key}`} className={className}>{renderInlineKnowledgeText(content)}</h1>
+  if (level === 2) return <h2 key={`heading-${key}`} className={className}>{renderInlineKnowledgeText(content)}</h2>
+  if (level === 3) return <h3 key={`heading-${key}`} className={className}>{renderInlineKnowledgeText(content)}</h3>
+  if (level === 4) return <h4 key={`heading-${key}`} className={className}>{renderInlineKnowledgeText(content)}</h4>
+  if (level === 5) return <h5 key={`heading-${key}`} className={className}>{renderInlineKnowledgeText(content)}</h5>
+  return <h6 key={`heading-${key}`} className={className}>{renderInlineKnowledgeText(content)}</h6>
 }
 
 function renderKnowledgeBody(body?: string) {
-  if (!body?.trim()) return '该文档暂无正文内容。'
+  if (!body?.trim()) {
+    return <p className='text-sm text-slate-700 dark:text-muted-foreground'>该文档暂无正文内容。</p>
+  }
 
-  const lines = body.split(/\r?\n/)
+  const lines = body.replace(/\r\n/g, '\n').split('\n')
+  const blocks: ReactNode[] = []
+  let index = 0
 
-  return (
-    <div className='space-y-3'>
-      {lines.map((rawLine, index) => {
-        const line = rawLine.trim()
+  while (index < lines.length) {
+    const line = lines[index]
+    const trimmed = line.trim()
 
-        if (!line) {
-          return <div key={`space-${index}`} className='h-2' />
-        }
+    if (!trimmed) {
+      index += 1
+      continue
+    }
 
-        if (line === '---') {
-          return <div key={`divider-${index}`} className='my-1 border-t border-slate-200/80 dark:border-border/70' />
-        }
+    if (trimmed.startsWith('```')) {
+      const code: string[] = []
+      const start = index
+      index += 1
+      while (index < lines.length && !lines[index].trim().startsWith('```')) {
+        code.push(lines[index])
+        index += 1
+      }
+      if (index < lines.length) index += 1
+      blocks.push(
+        <pre key={`code-${start}`} className='overflow-x-auto rounded-xl border border-slate-200/80 bg-slate-50 p-4 font-mono text-xs leading-6 text-slate-900 dark:border-border/70 dark:bg-muted dark:text-foreground'>
+          <code>{code.join('\n')}</code>
+        </pre>,
+      )
+      continue
+    }
 
-        if (/^[^[]+[：:]$/.test(line)) {
-          return (
-            <div key={`heading-${index}`} className='pt-1 text-sm font-semibold text-slate-900 dark:text-foreground'>
-              {line}
-            </div>
-          )
-        }
+    const heading = trimmed.match(/^(#{1,6})\s+(.+)$/)
+    if (heading) {
+      blocks.push(renderKnowledgeHeading(heading[1].length, heading[2], index))
+      index += 1
+      continue
+    }
 
-        return (
-          <p key={`line-${index}`} className='text-sm leading-7 text-slate-700 dark:text-muted-foreground'>
-            {renderInlineKnowledgeText(line)}
-          </p>
-        )
-      })}
-    </div>
-  )
+    if (/^(---|\*\*\*|___)$/.test(trimmed)) {
+      blocks.push(<div key={`divider-${index}`} className='border-t border-slate-200/80 dark:border-border/70' />)
+      index += 1
+      continue
+    }
+
+    if (trimmed.startsWith('>')) {
+      const quote: string[] = []
+      const start = index
+      while (index < lines.length && lines[index].trim().startsWith('>')) {
+        quote.push(lines[index].trim().replace(/^>\s?/, ''))
+        index += 1
+      }
+      blocks.push(
+        <blockquote key={`quote-${start}`} className='border-l-2 border-primary/40 pl-4 text-sm leading-7 text-slate-600 dark:text-muted-foreground'>
+          {renderInlineKnowledgeText(quote.join(' '))}
+        </blockquote>,
+      )
+      continue
+    }
+
+    const ordered = /^\d+\.\s+/.test(trimmed)
+    const unordered = /^[-*+]\s+/.test(trimmed)
+    if (ordered || unordered) {
+      const items: string[] = []
+      const start = index
+      const pattern = ordered ? /^\d+\.\s+/ : /^[-*+]\s+/
+      while (index < lines.length && pattern.test(lines[index].trim())) {
+        items.push(lines[index].trim().replace(pattern, ''))
+        index += 1
+      }
+      const listItems = items.map((item, itemIndex) => (
+        <li key={`${start}-${itemIndex}`}>{renderInlineKnowledgeText(item)}</li>
+      ))
+      blocks.push(
+        ordered ? (
+          <ol key={`ordered-${start}`} className='flex list-decimal flex-col gap-1 pl-5 text-sm leading-7 text-slate-700 dark:text-muted-foreground'>
+            {listItems}
+          </ol>
+        ) : (
+          <ul key={`unordered-${start}`} className='flex list-disc flex-col gap-1 pl-5 text-sm leading-7 text-slate-700 dark:text-muted-foreground'>
+            {listItems}
+          </ul>
+        ),
+      )
+      continue
+    }
+
+    if (/^[^[]+[：:]$/.test(trimmed)) {
+      blocks.push(
+        <div key={`legacy-heading-${index}`} className='pt-1 text-sm font-semibold text-slate-900 dark:text-foreground'>
+          {renderInlineKnowledgeText(trimmed)}
+        </div>,
+      )
+      index += 1
+      continue
+    }
+
+    const paragraph = [trimmed]
+    const start = index
+    index += 1
+    while (index < lines.length && lines[index].trim() && !isKnowledgeBlockStart(lines[index].trim())) {
+      paragraph.push(lines[index].trim())
+      index += 1
+    }
+    blocks.push(
+      <p key={`paragraph-${start}`} className='text-sm leading-7 text-slate-700 dark:text-muted-foreground'>
+        {renderInlineKnowledgeText(paragraph.join(' '))}
+      </p>,
+    )
+  }
+
+  return <div className='flex flex-col gap-3'>{blocks}</div>
 }
 
 export function KnowledgePage() {
