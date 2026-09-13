@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { useUsageVisit } from '@/lib/use-usage-visit';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AnnouncementPopup } from '@/features/announcements/announcement-popup';
@@ -11,6 +12,7 @@ function AppShellOutletFallback() {
 }
 
 export function AppShell() {
+  useUsageVisit();
   const location = useLocation()
   const resetKey = `${location.pathname}${location.search}`
 

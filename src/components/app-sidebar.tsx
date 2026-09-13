@@ -15,6 +15,7 @@ import {
   IconShieldLock,
   IconTicket,
   IconUsers,
+  IconTrophy,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -176,6 +177,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain
           items={[
             { title: "用户中心", url: "/dashboard", icon: IconDashboard },
+            { title: "使用记录", url: "/usage", icon: IconGauge },
+            { title: "排行榜", url: "/leaderboard", icon: IconTrophy },
             { title: "订阅中心", url: "/clients", icon: IconLink },
             ...(useRestrictedNavigation
               ? [{ title: "配额信息", url: "/quota", icon: IconGauge }]
