@@ -106,7 +106,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=build-${{ github.run_id }}-${{ github.run_attempt }}
-            type=sha,format=long,prefix=sha-
             type=ref,event=branch
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
           labels: |
@@ -144,7 +143,7 @@ jobs:
     if: >-
       startsWith(github.ref, 'refs/heads/') &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev') ||
         (github.event_name == 'push' && github.ref == 'refs/heads/dev')
       )
     needs: build-and-push
@@ -257,7 +256,7 @@ jobs:
     name: Update JPGREEN production theme
     if: >-
       github.ref == 'refs/heads/main' &&
-      github.event_name == 'workflow_dispatch'
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: build-and-push
     runs-on: ubuntu-latest
     concurrency:
