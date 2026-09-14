@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Activity, ArrowDownToLine, ArrowUpToLine, Database } from 'lucide-react'
+import { Activity, ArrowDownToLine, ArrowUpToLine } from 'lucide-react'
 
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatBytes } from '@/lib/format'
@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -186,16 +185,6 @@ export function ChartAreaInteractive({ trafficLogs, updatedAtLabel, metaChipClas
       <CardHeader className='min-w-0 gap-4 border-b border-slate-200/70 pb-5 dark:border-border/60'>
         <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
           <div className='min-w-0 space-y-3'>
-            <div className='flex flex-wrap items-center gap-2'>
-              <Badge variant='outline' className='rounded-full border-primary/15 bg-primary/8 px-3 py-1 text-primary'>
-                <Database className='size-3.5' />
-                真实流量趋势
-              </Badge>
-              <Badge variant='outline' className='rounded-full px-3 py-1'>
-                <Activity className='size-3.5' />
-                最近 {timeRange === '30d' ? '30 天' : timeRange === '14d' ? '14 天' : '7 天'}
-              </Badge>
-            </div>
             <div className='min-w-0 space-y-2'>
               <CardTitle>下载 / 上传</CardTitle>
               <div className='flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-muted-foreground'>

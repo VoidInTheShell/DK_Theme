@@ -121,6 +121,10 @@ export type Notice = {
   img_url?: string | null;
   tags?: string[];
   popup: boolean;
+  pinned?: boolean;
+  require_ack?: boolean;
+  acknowledged?: boolean;
+  revision?: number;
   sort?: number | null;
   created_at?: number;
   updated_at?: number;
@@ -195,6 +199,10 @@ export type NodeStatus = {
   loss?: number | null;
   last_checked?: number | null;
   remarks?: string | null;
+  machine_traffic?: {
+    remaining_bytes: number | null;
+    unlimited: boolean;
+  } | null;
 };
 
 export type TrafficLog = {

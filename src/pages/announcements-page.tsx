@@ -27,11 +27,11 @@ function getErrorMessage(error: unknown) {
 }
 
 export function AnnouncementsPage() {
-  const { announcementsEnabled } = useAuth()
+  const { announcementsEnabled, user } = useAuth()
   const [current, setCurrent] = useState(1)
   const [searchParams, setSearchParams] = useSearchParams()
   const noticesQuery = useQuery({
-    queryKey: ['announcements', current],
+    queryKey: ['announcements', user?.email, current],
     queryFn: () => getNotices(current),
     enabled: announcementsEnabled,
     staleTime: 60 * 1000,
@@ -124,6 +124,8 @@ export function AnnouncementsPage() {
                           {formatDateTime(notice.created_at)}
                         </time>
                         {notice.popup ? <Badge>重要</Badge> : null}
+                        {notice.pinned ? <Badge variant='outline'>置顶</Badge> : null}
+                        {notice.require_ack ? <Badge variant='secondary'>{notice.acknowledged ? '已确认' : '待确认'}</Badge> : null}
                       </div>
 
                       <Separator orientation='vertical' className='hidden h-full md:block' />

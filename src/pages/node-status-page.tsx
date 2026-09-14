@@ -17,7 +17,8 @@ import { getNodeStatuses } from '@/lib/api/services/node-status'
 import type { NodeStatus } from '@/lib/api/types'
 import { appConfig } from '@/lib/config'
 import { getFlagAsset, getRegionBadgeFromText, type FlagCode, type RegionBadge } from '@/lib/flags'
-import { formatDateTime } from '@/lib/format'
+import { formatBytes, formatDateTime } from '@/lib/format'
+import { useAuth } from '@/features/auth/auth-context'
 
 type NodeFilter = 'all' | 'online' | 'offline' | 'tagged'
 type NodeSort = 'status' | 'name' | 'rate' | 'checked'
@@ -190,13 +191,14 @@ function sortNodes(nodes: NodeStatus[], sortBy: NodeSort) {
 }
 
 export function NodeStatusPage() {
+  const { selfUseMode, user } = useAuth()
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState<NodeFilter>('all')
   const [sortBy, setSortBy] = useState<NodeSort>('status')
   const [viewMode, setViewMode] = useState<NodeViewMode>('card')
 
   const nodeStatusQuery = useQuery({
-    queryKey: ['node-status'],
+    queryKey: ['node-status', user?.email, selfUseMode],
     queryFn: getNodeStatuses,
     refetchInterval: appConfig.nodeStatus.refreshIntervalMs,
     refetchIntervalInBackground: true,
@@ -410,6 +412,7 @@ export function NodeStatusPage() {
                           </div>
 
                           <div className='mt-auto pt-3 text-[11px] text-muted-foreground'>
+                            {selfUseMode ? <MachineTraffic node={node} /> : null}
                             {getNodeStatusSummary(node)}
                           </div>
                         </div>
@@ -455,6 +458,7 @@ export function NodeStatusPage() {
                           </div>
 
                           <div className='w-full text-sm text-muted-foreground xl:w-auto xl:max-w-56 xl:text-right'>
+                            {selfUseMode ? <MachineTraffic node={node} /> : null}
                             {getNodeStatusSummary(node)}
                           </div>
                         </div>
@@ -473,4 +477,14 @@ export function NodeStatusPage() {
       </div>
     </div>
   )
+}
+
+function MachineTraffic({ node }: { node: NodeStatus }) {
+  const traffic = node.machine_traffic
+  const value = traffic?.unlimited ? '不限量' : traffic?.remaining_bytes == null ? '暂未提供' : formatBytes(traffic.remaining_bytes)
+  return <div className='mb-3 rounded-xl border bg-background/60 p-3 text-left'>
+    <div className='text-xs text-muted-foreground'>服务器剩余流量</div>
+    <div className='mt-1 text-base font-semibold text-foreground'>{value}</div>
+    <p className='mt-1 text-xs leading-5 text-muted-foreground'>同一服务器的节点共享此额度。</p>
+  </div>
 }

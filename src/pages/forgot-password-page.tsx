@@ -1,3 +1,4 @@
+import { useSiteBranding } from '@/lib/site-branding'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -14,7 +15,6 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { appConfig } from '@/lib/config'
 import {
   forgotPasswordSchema,
   resetForgotPassword,
@@ -36,6 +36,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export function ForgotPasswordPage() {
+  const brand = useSiteBranding()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -118,7 +119,7 @@ export function ForgotPasswordPage() {
         <div className='flex flex-col items-center gap-3 text-center'>
           <div className='inline-flex items-center rounded-full border border-primary/12 bg-primary/8 px-3 py-1 text-[11px] font-medium tracking-[0.16em] text-primary uppercase'>重置密码</div>
           <div className='space-y-2'>
-            <h1 className='text-3xl font-semibold tracking-tight'>找回 {appConfig.appName} 密码</h1>
+            <h1 className='text-3xl font-semibold tracking-tight'>找回 {brand.appName} 密码</h1>
             <p className='mx-auto max-w-sm text-sm leading-6 text-balance text-muted-foreground'>验证邮箱后重置密码，再返回登录继续访问账户与服务信息。</p>
           </div>
         </div>

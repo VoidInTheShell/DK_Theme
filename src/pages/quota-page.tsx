@@ -1,8 +1,8 @@
+import { useSiteBranding } from '@/lib/site-branding'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { PageHeader } from '@/components/page-header'
 import { useAuth } from '@/features/auth/auth-context'
-import { appConfig } from '@/lib/config'
 import { formatBytes, formatDateTime } from '@/lib/format'
 import { CalendarClock, Gauge, Layers3, Network, RotateCw, Router, ShieldCheck, Users } from 'lucide-react'
 
@@ -52,6 +52,7 @@ function QuotaMetric({
 }
 
 export function QuotaPage() {
+  const brand = useSiteBranding()
   const { subscribe, user } = useAuth()
   const plan = subscribe?.plan_details
   const planName = subscribe?.plan ?? user?.plan ?? '未分配套餐'
@@ -98,15 +99,15 @@ export function QuotaPage() {
               <div>
                 <div className='flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300'>
                   <Network className='size-4' />
-                  UEG Global CDN
+                  {brand.appName}
                 </div>
                 <div className='mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white'>{planName}</div>
                 <div className='mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300'>
-                  {plan?.content || '当前账户已接入 UEG 全球网络，以下用量按本订阅周期实时统计。'}
+                  {plan?.content || brand.description || '以下用量按本订阅周期统计。'}
                 </div>
               </div>
               <div className='flex size-14 items-center justify-center rounded-2xl border border-sky-200/80 bg-white/80 shadow-sm dark:border-sky-400/20 dark:bg-white/5'>
-                <img src={appConfig.brandMarkUrl} alt='UEG' className='h-11 w-12 object-contain' />
+                <img src={brand.logo} alt={brand.appName} className='h-11 w-12 object-contain' />
               </div>
             </div>
 

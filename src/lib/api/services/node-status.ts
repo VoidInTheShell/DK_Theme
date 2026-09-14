@@ -74,6 +74,17 @@ function normalizeNodeStatus(item: RawNodeStatus, index: number): NodeStatus {
     loss,
     last_checked: lastChecked,
     remarks: toStringValue(item.remarks) ?? toStringValue(item.description),
+    machine_traffic: normalizeMachineTraffic(item.machine_traffic),
+  }
+}
+
+function normalizeMachineTraffic(value: unknown): NodeStatus['machine_traffic'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const source = value as Record<string, unknown>
+  const remaining = toNumber(source.remaining_bytes)
+  return {
+    remaining_bytes: remaining == null ? null : Math.max(0, remaining),
+    unlimited: source.unlimited === true || source.unlimited === 1 || source.unlimited === '1',
   }
 }
 

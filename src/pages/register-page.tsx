@@ -1,3 +1,4 @@
+import { useSiteBranding } from '@/lib/site-branding'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -14,7 +15,6 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { appConfig } from '@/lib/config'
 import {
   register,
   registerSchema,
@@ -36,6 +36,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export function RegisterPage() {
+  const brand = useSiteBranding()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [error, setError] = useState<string | null>(null)
@@ -99,7 +100,7 @@ export function RegisterPage() {
         <div className='flex flex-col items-center gap-3 text-center'>
           <div className='inline-flex items-center rounded-full border border-primary/12 bg-primary/8 px-3 py-1 text-[11px] font-medium tracking-[0.16em] text-primary uppercase'>创建账户</div>
           <div className='space-y-2'>
-            <h1 className='text-3xl font-semibold tracking-tight'>注册 {appConfig.appName}</h1>
+            <h1 className='text-3xl font-semibold tracking-tight'>注册 {brand.appName}</h1>
             <p className='mx-auto max-w-sm text-sm leading-6 text-balance text-muted-foreground'>创建账户后即可进入管理页面，查看账户、订单与服务信息。</p>
           </div>
         </div>

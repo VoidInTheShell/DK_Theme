@@ -1,4 +1,8 @@
 import { ArrowRight, CalendarDays } from 'lucide-react'
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { acknowledgeNotice } from './acknowledgement'
+import { useAuth } from '@/features/auth/auth-context'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,7 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { NoticeContent } from '@/features/announcements/notice-content'
-import type { Notice } from '@/lib/api/types'
+import type { Notice, NoticePage } from '@/lib/api/types'
 import { formatDateTime } from '@/lib/format'
 
 type AnnouncementDialogProps = {
@@ -22,8 +26,26 @@ type AnnouncementDialogProps = {
 }
 
 export function AnnouncementDialog({ notice, open, onOpenChange, onViewAll, popup = false }: AnnouncementDialogProps) {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const [busy, setBusy] = useState(false)
+  const [failure, setFailure] = useState<{ id: number; message: string } | null>(null)
+  async function confirm() {
+    if (!notice || busy) return
+    setBusy(true)
+    setFailure(null)
+    try {
+      await acknowledgeNotice(notice)
+      queryClient.setQueriesData<NoticePage>({ queryKey: ['announcements', user?.email] }, page => page ? {
+        ...page, items: page.items.map(item => item.id === notice.id ? { ...item, acknowledged: true } : item),
+      } : page)
+      onOpenChange(false)
+    } catch (error) {
+      setFailure({ id: notice.id, message: error instanceof Error ? error.message : '确认失败，请重试。' })
+    } finally { setBusy(false) }
+  }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={next => { if (!busy) onOpenChange(next) }}>
       <DialogContent className='flex max-h-[calc(100dvh-2rem)] max-w-2xl flex-col overflow-hidden p-0'>
         <DialogHeader className='shrink-0 px-6 pt-6 pr-14'>
           <div className='flex flex-wrap items-center gap-2'>
@@ -56,10 +78,12 @@ export function AnnouncementDialog({ notice, open, onOpenChange, onViewAll, popu
 
         <Separator />
 
+        {failure?.id === notice?.id ? <p role='alert' className='px-6 text-sm text-destructive'>{failure?.message}</p> : null}
         <div className='flex shrink-0 flex-col-reverse gap-2 px-6 py-4 sm:flex-row sm:justify-end'>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>关闭</Button>
+          <Button variant='outline' disabled={busy} onClick={() => onOpenChange(false)}>{notice?.require_ack && !notice.acknowledged ? '稍后阅读' : '关闭'}</Button>
+          {notice?.require_ack ? <Button disabled={busy || notice.acknowledged} onClick={() => void confirm()}>{busy ? '正在确认…' : notice.acknowledged ? '已确认阅读' : '我已阅读并确认'}</Button> : null}
           {onViewAll ? (
-            <Button onClick={onViewAll}>
+            <Button variant='outline' disabled={busy} onClick={onViewAll}>
               查看全部公告
               <ArrowRight data-icon='inline-end' aria-hidden='true' />
             </Button>

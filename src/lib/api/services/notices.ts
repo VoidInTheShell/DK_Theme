@@ -79,6 +79,10 @@ function normalizeNotice(value: unknown): Notice | null {
     img_url: normalizeImageUrl(raw.img_url),
     tags: normalizeTags(raw.tags),
     popup: toBoolean(raw.popup),
+    pinned: toBoolean(raw.pinned),
+    require_ack: toBoolean(raw.require_ack),
+    acknowledged: toBoolean(raw.acknowledged),
+    revision: toNumber(raw.revision) ?? undefined,
     sort: toNumber(raw.sort),
     created_at: toNumber(raw.created_at) ?? undefined,
     updated_at: toNumber(raw.updated_at) ?? undefined,
@@ -108,6 +112,7 @@ export async function getNotices(current = 1): Promise<NoticePage> {
   })
   const rawItems = Array.isArray(response.data.data) ? response.data.data : []
   const items = rawItems.map(normalizeNotice).filter((notice): notice is Notice => notice != null)
+    .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)))
   const total = Math.max(0, toNumber(response.data.total) ?? items.length)
 
   return createPage(items, total, normalizedCurrent)
