@@ -1,3 +1,4 @@
+import { formatTrafficBytes } from "@/lib/traffic-format";
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -408,7 +409,7 @@ export function OrdersPage() {
                   <div className='grid gap-3 sm:grid-cols-2'>
                     <div className='rounded-3xl border border-slate-200/80 bg-slate-50/85 p-5 dark:border-border/70 dark:bg-background/35'>
                       <div className='text-sm text-slate-500 dark:text-muted-foreground'>商品流量</div>
-                      <div className='mt-2 text-lg font-semibold text-slate-900 dark:text-foreground'>{detail.plan.transfer_enable} GB</div>
+                      <div className='mt-2 text-lg font-semibold text-slate-900 dark:text-foreground'>{formatTrafficBytes(detail.plan.transfer_enable == null ? null : detail.plan.transfer_enable * 1024 ** 3)}</div>
                     </div>
                     <div className='rounded-3xl border border-slate-200/80 bg-slate-50/85 p-5 dark:border-border/70 dark:bg-background/35'>
                       <div className='text-sm text-slate-500 dark:text-muted-foreground'>订单状态说明</div>

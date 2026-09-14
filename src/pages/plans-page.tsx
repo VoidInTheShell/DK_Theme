@@ -42,9 +42,7 @@ const oneTimePeriodOptions: Array<{
 ]
 
 function formatPlanTraffic(transfer?: number | null) {
-  if (transfer == null) return '--'
-  if (transfer > 0 && transfer < 1024 * 1024) return `${transfer} GB`
-  return formatBytes(transfer)
+  return formatBytes(transfer == null ? transfer : transfer * 1024 ** 3)
 }
 
 function getPlanHighlights(name: string, transfer?: number | null, mode: 'recurring' | 'oneTime' = 'recurring') {
