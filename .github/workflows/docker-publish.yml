@@ -142,7 +142,7 @@ jobs:
   deploy-staging:
     name: Update GJHK staging theme
     if: >-
-      startsWith(github.ref, 'refs/heads/') &&
+      false && startsWith(github.ref, 'refs/heads/') &&
       (
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'push' && github.ref == 'refs/heads/dev')
@@ -256,7 +256,7 @@ jobs:
   deploy-production:
     name: Update JPGREEN production theme
     if: >-
-      github.ref == 'refs/heads/main' &&
+      false && github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch'
     needs: build-and-push
     runs-on: ubuntu-latest
