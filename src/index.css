@@ -134,8 +134,8 @@ code {
   --border: oklch(0.321 0.001 0 / 70%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.295 0.085 259.422);
-  --chart-2: oklch(0.436 0.093 243.039);
+  --chart-1: oklch(0.82 0.075 243.039);
+  --chart-2: oklch(0.75 0.08 243.039);
   --chart-3: oklch(0.68 0.048 208.577);
   --chart-4: oklch(0.913 0.022 136.599);
   --chart-5: oklch(0.985 0.001 0);

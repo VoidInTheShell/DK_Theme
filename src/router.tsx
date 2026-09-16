@@ -7,6 +7,8 @@ import { useAuth } from '@/features/auth/auth-context';
 const ClientsPage = lazy(() => import('@/pages/clients-page').then((module) => ({ default: module.ClientsPage })));
 const AnnouncementsPage = lazy(() => import('@/pages/announcements-page').then((module) => ({ default: module.AnnouncementsPage })));
 const DashboardPage = lazy(() => import('@/pages/dashboard-page').then((module) => ({ default: module.DashboardPage })));
+const UsagePage = lazy(() => import('@/pages/usage-page').then(module => ({ default: module.UsagePage })));
+const LeaderboardPage = lazy(() => import('@/pages/leaderboard-page').then(module => ({ default: module.LeaderboardPage })));
 const InvitePage = lazy(() => import('@/pages/invite-page').then((module) => ({ default: module.InvitePage })));
 const KnowledgePage = lazy(() => import('@/pages/knowledge-page').then((module) => ({ default: module.KnowledgePage })));
 const LoginPage = lazy(() => import('@/pages/login-page').then((module) => ({ default: module.LoginPage })));
@@ -49,6 +51,8 @@ export function AppRouter() {
       </Route>
       <Route element={<ProtectedLayout />}>
         <Route path='/dashboard' element={<DashboardPage />} />
+        <Route path='/usage' element={<UsagePage />} />
+        <Route path='/leaderboard' element={<LeaderboardPage />} />
         <Route path='/announcements' element={<AnnouncementsPage />} />
         <Route path='/clients' element={<ClientsPage />} />
         <Route path='/plans' element={<PlansPage />} />

@@ -40,21 +40,25 @@ export function AnnouncementPopup() {
   const { announcementsEnabled, user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const [dismissedKey, setDismissedKey] = useState<string | null>(null)
+  const [dismissedKeys, setDismissedKeys] = useState<string[]>([])
   const noticesQuery = useQuery({
-    queryKey: ['announcements', 1],
+    queryKey: ['announcements', user?.email, 1],
     queryFn: () => getNotices(1),
     enabled: announcementsEnabled,
     staleTime: 5 * 60 * 1000,
   })
-  const notice = noticesQuery.data?.items.find((item) => item.popup) ?? null
-  const storageKey = notice ? getStorageKey(notice.id, notice.updated_at ?? notice.created_at, user?.email) : null
+  const notice = noticesQuery.data?.items.find((item) => {
+    if (!(item.popup || (item.pinned && item.require_ack)) || item.acknowledged) return false
+    const key = getStorageKey(item.id, item.revision ?? item.updated_at ?? item.created_at, user?.email)
+    return !dismissedKeys.includes(key) && (item.require_ack || !hasSeenAnnouncement(key))
+  }) ?? null
+  const storageKey = notice ? getStorageKey(notice.id, notice.revision ?? notice.updated_at ?? notice.created_at, user?.email) : null
   const isAnnouncementPage = location.pathname === '/announcements'
-  const open = Boolean(notice && !isAnnouncementPage && storageKey !== dismissedKey && !hasSeenAnnouncement(storageKey))
+  const open = Boolean(notice && !isAnnouncementPage && !dismissedKeys.includes(storageKey ?? "") && (notice.require_ack || !hasSeenAnnouncement(storageKey)))
 
   function closePopup() {
-    markAnnouncementSeen(storageKey)
-    setDismissedKey(storageKey)
+    if (!notice?.require_ack) markAnnouncementSeen(storageKey)
+    setDismissedKeys(keys => storageKey ? [...keys, storageKey] : keys)
   }
 
   function viewAll() {

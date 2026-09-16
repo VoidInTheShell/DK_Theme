@@ -21,6 +21,11 @@ RUN npm run build
 
 FROM nginx:1.28-alpine
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
+LABEL org.opencontainers.image.version=${APP_VERSION}
+RUN printf '%s\n' "$APP_VERSION" > /etc/xboard-version
+
 COPY deploy/staging/nginx.conf /etc/nginx/conf.d/default.conf
 COPY deploy/staging/admin-route.conf.template /usr/local/share/xboard-admin-route.conf.template
 COPY --chmod=755 deploy/staging/admin-route-sync.sh /usr/local/bin/xboard-admin-route-sync

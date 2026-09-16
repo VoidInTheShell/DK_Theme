@@ -9,8 +9,9 @@ import {
 } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/auth-context'
 import { getTrafficLogs } from '@/lib/api/services/traffic'
-import { formatBytes, formatCurrency, formatDateTime } from '@/lib/format'
-import { Activity, CalendarClock, CreditCard, Gauge, Layers3, Sparkles, TrendingUp, Zap } from 'lucide-react'
+import { RecentNotices } from '@/features/announcements/recent-notices'
+import { formatBytes } from '@/lib/format'
+import { Activity, Gauge, Sparkles, TrendingUp, Zap } from 'lucide-react'
 
 const SectionCards = lazy(() => import('@/components/section-cards').then((module) => ({ default: module.SectionCards })))
 const ChartAreaInteractive = lazy(() => import('@/components/chart-area-interactive').then((module) => ({ default: module.ChartAreaInteractive })))
@@ -67,18 +68,14 @@ function formatDashboardUpdatedAt(date: Date) {
 }
 
 export function DashboardPage() {
-  const { user, subscribe } = useAuth()
+  const { user, subscribe, selfUseMode } = useAuth()
   const trafficLogsQuery = useQuery({ queryKey: ['traffic-logs'], queryFn: getTrafficLogs })
   const trafficLogs = trafficLogsQuery.data ?? []
 
-  const planName = subscribe?.plan ?? user?.plan ?? '--'
-  const expiredAt = subscribe?.expired_at ?? user?.expired_at
   const totalTraffic = subscribe?.transfer_enable ?? user?.transfer_enable ?? 0
   const usedTraffic = subscribe?.d ?? user?.d ?? 0
   const remainingTraffic = Math.max(totalTraffic - usedTraffic, 0)
   const usageRate = totalTraffic > 0 ? Math.min(100, Math.round((usedTraffic / totalTraffic) * 100)) : 0
-  const balance = user?.balance ?? 0
-  const commissionBalance = user?.commission_balance ?? 0
   const usageTone = usageRate >= 85 ? '需关注' : usageRate >= 60 ? '持续使用中' : '状态健康'
   const dashboardUpdatedAtLabel = formatDashboardUpdatedAt(new Date())
   const remainingRate = totalTraffic > 0 ? Math.max(0, 100 - usageRate) : 0
@@ -105,42 +102,9 @@ export function DashboardPage() {
                   欢迎回来，{user?.email ?? '用户'}
                 </CardTitle>
                 <CardDescription className='max-w-xl text-sm leading-6 text-slate-500 dark:text-muted-foreground'>
-                  当前套餐、到期时间、余额与流量进度都已整理在这里，方便你快速查看续费与使用状态。
+                  查看本周期流量与最近服务公告。
                 </CardDescription>
               </div>
-
-              <div className='grid flex-1 content-end gap-2.5 sm:grid-cols-2 xl:grid-cols-3'>
-                <div className='rounded-2xl border border-slate-200/80 bg-white/75 px-3.5 py-4 shadow-sm dark:border-border/70 dark:bg-background/35'>
-                  <div className='flex min-h-[92px] flex-col'>
-                    <div className='flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-muted-foreground'>
-                      <Layers3 className='size-3.5' /> 当前套餐
-                    </div>
-                    <div className='mt-2.5 text-base font-semibold text-slate-900 dark:text-foreground'>{planName}</div>
-                    <div className='mt-auto pt-2 text-xs text-slate-500 dark:text-muted-foreground'>当前订阅周期</div>
-                  </div>
-                </div>
-
-                <div className='rounded-2xl border border-slate-200/80 bg-white/75 px-3.5 py-4 shadow-sm dark:border-border/70 dark:bg-background/35'>
-                  <div className='flex min-h-[92px] flex-col'>
-                    <div className='flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-muted-foreground'>
-                      <CalendarClock className='size-3.5' /> 到期时间
-                    </div>
-                    <div className='mt-2.5 text-base font-semibold text-slate-900 dark:text-foreground'>{formatDateTime(expiredAt)}</div>
-                    <div className='mt-auto pt-2 text-xs text-slate-500 dark:text-muted-foreground'>建议提前处理续费</div>
-                  </div>
-                </div>
-
-                <div className='rounded-2xl border border-slate-200/80 bg-white/75 px-3.5 py-4 shadow-sm dark:border-border/70 dark:bg-background/35'>
-                  <div className='flex min-h-[92px] flex-col'>
-                    <div className='flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-muted-foreground'>
-                      <CreditCard className='size-3.5' /> 账户余额
-                    </div>
-                    <div className='mt-2.5 text-base font-semibold text-slate-900 dark:text-foreground'>{formatCurrency(balance)}</div>
-                    <div className='mt-auto pt-2 text-xs text-slate-500 dark:text-muted-foreground'>返利 {formatCurrency(commissionBalance)}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <div className='flex h-full flex-col rounded-3xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88))] p-4 shadow-sm dark:border-border/70 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.62),rgba(15,23,42,0.42))] lg:p-5'>
               <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
@@ -180,7 +144,7 @@ export function DashboardPage() {
                 <div className='mt-4 h-3 overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10'>
                   <div
                     className={`h-full rounded-full transition-all ${usageRate >= 85 ? 'bg-rose-500' : usageRate >= 60 ? 'bg-amber-500' : 'bg-primary'}`}
-                    style={{ width: `${Math.max(usageRate, totalTraffic > 0 ? 6 : 0)}%` }}
+                    style={{ width: `${usageRate}%` }}
                   />
                 </div>
 
@@ -208,11 +172,13 @@ export function DashboardPage() {
                 </div>
               </div>
             </div>
+            </div>
+            <RecentNotices />
           </CardContent>
         </Card>
       </div>
 
-      <section className='space-y-4 px-4 pt-5 lg:px-6 lg:pt-6'>
+      {!selfUseMode ? <section className='space-y-4 px-4 pt-5 lg:px-6 lg:pt-6'>
         <div className='flex flex-wrap items-end justify-between gap-3'>
           <div className='space-y-2'>
             <Badge variant='outline' className='rounded-full border-slate-200/80 bg-white/80 px-2.5 py-1 text-slate-600 dark:border-border/70 dark:bg-background/35 dark:text-muted-foreground'>
@@ -228,7 +194,7 @@ export function DashboardPage() {
         <Suspense fallback={<DashboardMetricSectionSkeleton />}>
           <SectionCards />
         </Suspense>
-      </section>
+      </section> : null}
 
       <section className='space-y-4 px-4 pb-2 pt-6 lg:px-6 lg:pt-7'>
         <div className='flex flex-wrap items-end justify-between gap-3'>
@@ -238,7 +204,7 @@ export function DashboardPage() {
             </Badge>
             <div>
               <h2 className='text-lg font-semibold tracking-tight text-slate-900 dark:text-foreground'>使用趋势与摘要</h2>
-              <p className='mt-1 text-sm text-slate-500 dark:text-muted-foreground'>趋势图与周摘要均来自真实流量日志接口，不再使用前端推演数据。</p>
+              <p className='mt-1 text-sm text-slate-500 dark:text-muted-foreground'>查看最近一周的流量变化与每日用量。</p>
             </div>
           </div>
         </div>

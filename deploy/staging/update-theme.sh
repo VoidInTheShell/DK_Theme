@@ -45,9 +45,19 @@ flock -x 9
 log "acquired deployment lock"
 
 AUTH_DIR=$(mktemp -d "/tmp/dk-theme-docker-auth.XXXXXX")
+deployment_complete=0
+rollback_ready=0
 cleanup() {
+    local rc=$?
+    trap - EXIT
+    if [ "$rc" -ne 0 ] && [ "$rollback_ready" = 1 ] && [ "$deployment_complete" = 0 ]; then
+        sudo -n cp -a "$AUTH_DIR/previous.env" "$TARGET_DIR/.deploy.env"
+        sudo -n docker compose --env-file "$TARGET_DIR/.deploy.env" -f "$TARGET_DIR/compose.yaml" up -d --no-deps theme || true
+        sudo -n docker exec xboard-theme nginx -s reload >/dev/null 2>&1 || true
+    fi
     sudo -n rm -rf -- "$AUTH_DIR"
     unset REGISTRY_TOKEN
+    exit "$rc"
 }
 trap cleanup EXIT
 
@@ -60,6 +70,8 @@ if [ ! -f "$TARGET_DIR/compose.yaml" ] || [ ! -f "$TARGET_DIR/.deploy.env" ]; th
     exit 0
 fi
 
+sudo -n cp -a "$TARGET_DIR/.deploy.env" "$AUTH_DIR/previous.env"
+rollback_ready=1
 set_env_value "$TARGET_DIR/.deploy.env" "DK_THEME_IMAGE" "$THEME_IMAGE"
 
 compose() {
@@ -76,7 +88,10 @@ for _ in $(seq 1 45); do
         printf '%s' "$active_path" | grep -Eq '^[A-Za-z0-9_-]{8,}$'
         [ "$active_path" != "passport" ]
         sudo -n docker exec xboard-theme test -s /var/run/xboard-admin-route/active.conf
-        sudo -n docker image prune -f >/dev/null
+        deployment_complete=1
+        if [ -f "$TARGET_DIR/release-maintenance.py" ]; then
+            sudo -n python3 "$TARGET_DIR/release-maintenance.py" "$TARGET_DIR"
+        fi
         log "theme deployment complete: $THEME_IMAGE"
         compose ps theme
         exit 0
