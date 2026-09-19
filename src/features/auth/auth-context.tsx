@@ -1,7 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { SubscribeInfo, UserInfo } from '@/lib/api/types';
-import { login as loginRequest, logout as logoutRequest, type LoginInput } from '@/lib/api/services/auth';
+import {
+  login as loginRequest,
+  logout as logoutRequest,
+  register as registerRequest,
+  type LoginInput,
+  type RegisterInput,
+} from '@/lib/api/services/auth';
 import { getSubscribeInfo, getUserCommConfig, getUserInfo } from '@/lib/api/services/user';
 import { tokenStorage } from '@/lib/storage';
 
@@ -13,6 +19,7 @@ type AuthContextValue = {
   announcementsEnabled: boolean;
   hydrated: boolean;
   login: (values: LoginInput) => Promise<void>;
+  register: (values: RegisterInput) => Promise<void>;
   logout: () => void;
 };
 
@@ -72,6 +79,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSubscribe(nextSubscribe);
       setSelfUseMode(Boolean(commConfig.self_use_mode));
       setAnnouncementsEnabled(commConfig.enable_announcements == null ? true : Boolean(commConfig.enable_announcements));
+    },
+    async register(values) {
+      const response = await registerRequest(values);
+      const nextToken = 'auth_data' in response ? response.auth_data : tokenStorage.get();
+      setToken(nextToken ?? tokenStorage.get());
+      const [nextUser, nextSubscribe, commConfig] = await Promise.all([
+        getUserInfo(),
+        getSubscribeInfo(),
+        getUserCommConfig().catch(() => ({ self_use_mode: false, enable_announcements: true })),
+      ]);
+      setUser(nextUser);
+      setSubscribe(nextSubscribe);
+      setSelfUseMode(Boolean(commConfig.self_use_mode));
+      setAnnouncementsEnabled(commConfig.enable_announcements == null ? true : Boolean(commConfig.enable_announcements));
+      setHydrated(true);
     },
     logout() {
       void logoutRequest();

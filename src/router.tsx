@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
 import { AuthLayout } from '@/components/auth-layout';
 import { useAuth } from '@/features/auth/auth-context';
@@ -39,6 +39,17 @@ function ProtectedLayout() {
   return <AppShell />;
 }
 
+function PurchaseAccess() {
+  const { selfUseMode, user } = useAuth();
+  const isPrivilegedUser = Boolean(user?.is_admin || user?.is_staff);
+
+  if (selfUseMode && !isPrivilegedUser) {
+    return <Navigate to='/quota' replace />;
+  }
+
+  return <Outlet />;
+}
+
 export function AppRouter() {
   const { token } = useAuth();
 
@@ -55,10 +66,12 @@ export function AppRouter() {
         <Route path='/leaderboard' element={<LeaderboardPage />} />
         <Route path='/announcements' element={<AnnouncementsPage />} />
         <Route path='/clients' element={<ClientsPage />} />
-        <Route path='/plans' element={<PlansPage />} />
+        <Route element={<PurchaseAccess />}>
+          <Route path='/plans' element={<PlansPage />} />
+          <Route path='/orders' element={<OrdersPage />} />
+        </Route>
         <Route path='/quota' element={<QuotaPage />} />
         <Route path='/node-status' element={<NodeStatusPage />} />
-        <Route path='/orders' element={<OrdersPage />} />
         <Route path='/invite' element={<InvitePage />} />
         <Route path='/tickets' element={<TicketsPage />} />
         <Route path='/knowledge' element={<KnowledgePage />} />
