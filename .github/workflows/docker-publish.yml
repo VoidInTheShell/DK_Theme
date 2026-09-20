@@ -60,6 +60,8 @@ jobs:
           grep --fixed-strings 'xboard-admin-route' deploy/staging/nginx.conf > /dev/null
           grep --fixed-strings '__ADMIN_PATH__' deploy/staging/admin-route.conf.template > /dev/null
           grep --fixed-strings 'xboard-admin:80' deploy/staging/admin-route.conf.template > /dev/null
+          grep --fixed-strings 'location ^~ /unitedearthgov/assets/' deploy/staging/admin-route.conf.template > /dev/null
+          grep --fixed-strings 'location = /unitedearthgov/favicon.svg' deploy/staging/admin-route.conf.template > /dev/null
           bash -n deploy/staging/admin-route-sync.sh
           bash -n deploy/staging/update-theme.sh
           bash -n deploy/production/update-theme.sh
