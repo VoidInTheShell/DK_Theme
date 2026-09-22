@@ -78,7 +78,7 @@ def image_reference(component, tag):
 
 
 def validate_manifest(manifest, component, tag):
-    require(manifest.get("schema_version") == 1, "Unsupported release manifest schema")
+    require(manifest.get("schema_version") == 2, "Unsupported release manifest schema")
     require(manifest.get("component") == component and manifest.get("version") == tag,
             "Component manifest identity mismatch")
     require(manifest.get("repository") == REPOS[component][0], "Unexpected release repository")
@@ -86,6 +86,8 @@ def validate_manifest(manifest, component, tag):
     require(manifest.get("platforms") == ["linux/amd64", "linux/arm64"], "Incomplete image platforms")
     require(manifest.get("channel") == ("dev" if "-dev." in tag else "stable"), "Channel mismatch")
     require(manifest.get("compatibility", {}).get("panel_contract") == 1, "Incompatible panel contract")
+    require(manifest.get("compatibility", {}).get("update_protocol") == 2, "Incompatible update protocol")
+    require(manifest.get("compatibility", {}).get("updater_state_schema") == 1, "Incompatible updater state schema")
     return manifest
 
 
