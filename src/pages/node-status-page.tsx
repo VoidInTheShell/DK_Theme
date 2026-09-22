@@ -18,6 +18,7 @@ import type { NodeStatus } from '@/lib/api/types'
 import { appConfig } from '@/lib/config'
 import { getFlagAsset, getRegionBadgeFromText, type FlagCode, type RegionBadge } from '@/lib/flags'
 import { formatBytes, formatDateTime } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/features/auth/auth-context'
 
 type NodeFilter = 'all' | 'online' | 'offline' | 'tagged'
@@ -481,10 +482,33 @@ export function NodeStatusPage() {
 
 function MachineTraffic({ node }: { node: NodeStatus }) {
   const traffic = node.machine_traffic
-  const value = traffic?.unlimited ? '不限量' : traffic?.remaining_bytes == null ? '暂未提供' : formatBytes(traffic.remaining_bytes)
+  const used = traffic?.used_bytes ?? null
+  const limit = traffic?.limit_bytes ?? null
+  const hasQuota = !traffic?.unlimited && used != null && limit != null && limit > 0
+  const percent = hasQuota ? Math.min(100, (used! / limit!) * 100) : null
+  const value = traffic?.unlimited
+    ? '不限量'
+    : traffic?.remaining_bytes == null && !hasQuota
+      ? '暂未提供'
+      : formatBytes(traffic?.remaining_bytes ?? Math.max(0, limit! - used!))
   return <div className='mb-3 rounded-xl border bg-background/60 p-3 text-left'>
-    <div className='text-xs text-muted-foreground'>服务器剩余流量</div>
+    <div className='flex items-center justify-between gap-2 text-xs text-muted-foreground'>
+      <span>服务器剩余流量</span>
+      {hasQuota && percent != null && (
+        <span className={cn('font-medium', percent >= 95 ? 'text-red-500' : percent >= 80 ? 'text-amber-500' : '')}>
+          已用 {percent.toFixed(0)}%
+        </span>
+      )}
+    </div>
     <div className='mt-1 text-base font-semibold text-foreground'>{value}</div>
+    {hasQuota && (
+      <div className='mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted'>
+        <div
+          className={cn('h-full rounded-full transition-all', percent! >= 95 ? 'bg-red-500' : percent! >= 80 ? 'bg-amber-500' : 'bg-primary')}
+          style={{ width: `${Math.max(2, percent!)}%` }}
+        />
+      </div>
+    )}
     <p className='mt-1 text-xs leading-5 text-muted-foreground'>同一服务器的节点共享此额度。</p>
   </div>
 }

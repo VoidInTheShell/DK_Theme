@@ -82,8 +82,12 @@ function normalizeMachineTraffic(value: unknown): NodeStatus['machine_traffic'] 
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const source = value as Record<string, unknown>
   const remaining = toNumber(source.remaining_bytes)
+  const used = toNumber(source.used_bytes)
+  const limit = toNumber(source.limit_bytes)
   return {
     remaining_bytes: remaining == null ? null : Math.max(0, remaining),
+    used_bytes: used == null ? null : Math.max(0, used),
+    limit_bytes: limit == null ? null : Math.max(0, limit),
     unlimited: source.unlimited === true || source.unlimited === 1 || source.unlimited === '1',
   }
 }

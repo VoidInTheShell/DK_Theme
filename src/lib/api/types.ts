@@ -201,6 +201,8 @@ export type NodeStatus = {
   remarks?: string | null;
   machine_traffic?: {
     remaining_bytes: number | null;
+    used_bytes: number | null;
+    limit_bytes: number | null;
     unlimited: boolean;
   } | null;
 };

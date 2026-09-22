@@ -313,9 +313,9 @@ export const mockInvite: InviteStat = {
 };
 
 export const mockNodeStatuses: NodeStatus[] = [
-  { id: 170, name: 'Pacific Stream 01', location: '美国 · 洛杉矶', group: 'vless', network: 'BGP', tags: ['Netflix', 'YouTube', 'Disney+'], rate: 0.5, online: true, last_checked: 1775885103 },
-  { id: 178, name: 'Silicon Valley AI 02', location: '美国 · 圣何塞', group: 'vless', network: 'Premium', tags: ['ChatGPT', 'Claude', 'Gemini'], rate: 1, online: true, last_checked: 1775885159 },
-  { id: 181, name: 'Broadway Max 03', location: '美国 · 纽约', group: 'trojan', network: 'IEPL', tags: ['Netflix', 'HBO Max', 'TikTok'], rate: 2, online: true, last_checked: 1775885139 },
+  { id: 170, name: 'Pacific Stream 01', location: '美国 · 洛杉矶', group: 'vless', network: 'BGP', tags: ['Netflix', 'YouTube', 'Disney+'], rate: 0.5, online: true, last_checked: 1775885103, machine_traffic: { remaining_bytes: 1_649_246_482_432, used_bytes: 649_246_482_432, limit_bytes: 2_298_493_122_816, unlimited: false } },
+  { id: 178, name: 'Silicon Valley AI 02', location: '美国 · 圣何塞', group: 'vless', network: 'Premium', tags: ['ChatGPT', 'Claude', 'Gemini'], rate: 1, online: true, last_checked: 1775885159, machine_traffic: { remaining_bytes: 109_951_162_777, used_bytes: 1_099_511_627_776, limit_bytes: 1_219_462_790_553, unlimited: false } },
+  { id: 181, name: 'Broadway Max 03', location: '美国 · 纽约', group: 'trojan', network: 'IEPL', tags: ['Netflix', 'HBO Max', 'TikTok'], rate: 2, online: true, last_checked: 1775885139, machine_traffic: { remaining_bytes: null, used_bytes: null, limit_bytes: null, unlimited: true } },
   { id: 11, name: 'Victoria Harbour 01', location: '中国香港 · 九龙', group: 'shadowsocks', network: 'IEPL', tags: ['低延迟', 'ChatGPT', 'YouTube'], rate: 1, online: true, last_checked: 1775885118 },
   { id: 13, name: 'Central Exchange 02', location: '中国香港 · 中环', group: 'shadowsocks', network: 'BGP', tags: ['Netflix', 'Disney+', '稳定'], rate: 1, online: true, last_checked: 1775885116 },
   { id: 14, name: 'Harbour Express 03', location: '中国香港 · 将军澳', group: 'vmess', network: 'CMI', tags: ['YouTube', '4K', '低倍率'], rate: 0.8, online: true, last_checked: 1775885115 },
