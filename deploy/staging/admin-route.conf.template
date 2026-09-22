@@ -6,7 +6,8 @@ location = /__ADMIN_PATH__ {
 
 # The built-in Xboard panel remains a deliberate compatibility action only.
 location = /__ADMIN_PATH__/original {
-    proxy_pass http://xboard-app:7001/_internal/standalone-admin/original;
+    set $xboard_original_upstream http://xboard-app:7001;
+    proxy_pass $xboard_original_upstream/_internal/standalone-admin/original;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -25,7 +26,8 @@ location ^~ /__ADMIN_PATH__/original/ {
 # entry path can change without rebuilding the image. Expose only static files
 # here; the fixed namespace never serves the administrator shell or API.
 location ^~ /unitedearthgov/assets/ {
-    proxy_pass http://xboard-admin:80;
+    set $xboard_admin_assets_upstream http://xboard-admin:80;
+    proxy_pass $xboard_admin_assets_upstream;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -36,7 +38,8 @@ location ^~ /unitedearthgov/assets/ {
 }
 
 location = /unitedearthgov/favicon.svg {
-    proxy_pass http://xboard-admin:80;
+    set $xboard_admin_favicon_upstream http://xboard-admin:80;
+    proxy_pass $xboard_admin_favicon_upstream;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -47,7 +50,8 @@ location = /unitedearthgov/favicon.svg {
 # All normal administrator navigation remains in the dedicated Xboard-Admin
 # container, including SPA history routes and relative static assets.
 location ^~ /__ADMIN_PATH__/ {
-    proxy_pass http://xboard-admin:80;
+    set $xboard_admin_upstream http://xboard-admin:80;
+    proxy_pass $xboard_admin_upstream;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
