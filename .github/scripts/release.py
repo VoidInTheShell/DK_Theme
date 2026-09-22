@@ -142,7 +142,7 @@ def plan(config, env):
         tag = f'build-{env["GITHUB_RUN_ID"]}-{env["GITHUB_RUN_ATTEMPT"]}'
         require(re.fullmatch(r"build-[1-9]\d*-[1-9]\d*", tag) is not None, "Invalid build identity")
         channel, publish = "legacy", False
-    return {"schema_version": 1, "component": component, "repository": repo,
+    return {"schema_version": 2, "component": component, "repository": repo,
             "version": tag, "channel": channel, "source_commit": sha, "publish": publish,
             "image": f"ghcr.io/voidintheshell/{component}:{tag}",
             "platforms": ["linux/amd64", "linux/arm64"],
