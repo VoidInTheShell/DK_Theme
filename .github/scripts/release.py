@@ -146,7 +146,7 @@ def plan(config, env):
             "version": tag, "channel": channel, "source_commit": sha, "publish": publish,
             "image": f"ghcr.io/voidintheshell/{component}:{tag}",
             "platforms": ["linux/amd64", "linux/arm64"],
-            "compatibility": {"panel_contract": 1, "update_protocol": 1},
+            "compatibility": {"panel_contract": 1, "update_protocol": 2, "updater_state_schema": 1},
             "update_capability": "external-executor-required"}
 
 
