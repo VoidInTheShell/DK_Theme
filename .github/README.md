@@ -26,15 +26,19 @@ The legacy deployment implementation is retained for recovery reference only.
 Non-dev builds keep run-specific build tags and do not become installable Releases.
 No floating branch/latest image tags are published.
 
-## Artifact contract (schema version 1)
+## Artifact contract (schema version 2)
 
 Every public release contains release-manifest.json:
 
 - component, repository, version, channel (stable/dev), source_commit;
 - image: ghcr.io/voidintheshell/dk_theme:VERSION;
 - platforms: linux/amd64 and linux/arm64;
-- compatibility.panel_contract=1 and compatibility.update_protocol=1;
-- update_capability=external-executor-required: an updater is not bundled yet.
+- compatibility.panel_contract=1 and compatibility.update_protocol=2.
+
+Theme updates are executed by the panel updater (xboard-admin-updater): the
+Xboard Compose suite registers the theme as an update target, and Admin's
+版本更新 page selects the exact theme version. Publishing still never
+deploys anything by itself.
 
 The updater must reject drafts, missing/incompatible manifests, wrong repository
 namespaces and incomplete platforms. The Git tag, image tag and runtime version
