@@ -69,10 +69,10 @@ export function AppRouter() {
         <Route element={<PurchaseAccess />}>
           <Route path='/plans' element={<PlansPage />} />
           <Route path='/orders' element={<OrdersPage />} />
+          <Route path='/invite' element={<InvitePage />} />
         </Route>
         <Route path='/quota' element={<QuotaPage />} />
         <Route path='/node-status' element={<NodeStatusPage />} />
-        <Route path='/invite' element={<InvitePage />} />
         <Route path='/tickets' element={<TicketsPage />} />
         <Route path='/knowledge' element={<KnowledgePage />} />
         <Route path='/settings' element={<SettingsPage />} />
