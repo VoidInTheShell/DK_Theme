@@ -66,15 +66,41 @@ export async function refreshSiteBranding() {
     let description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
     if (!description) { description = document.createElement('meta'); description.name = 'description'; document.head.append(description) }
     description.content = current.description
-    let icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-    if (!icon) { icon = document.createElement('link'); icon.rel = 'icon'; document.head.append(icon) }
-    if (current.logo) icon.href = current.logo
+    applyFavicon(current.logo)
     listeners.forEach(listener => listener())
   } catch { /* Keep the existing brand usable while the public configuration is unavailable. */ }
 }
+
+/**
+ * Swap the favicon link node (instead of mutating href) so the bundled
+ * type="image/png" hint never mismatches a configured SVG/other logo and
+ * browsers reliably pick up the change.
+ */
+function applyFavicon(logo: string) {
+  if (!logo) return
+  const existing = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  const icon = document.createElement('link')
+  icon.rel = 'icon'
+  icon.href = logo
+  if (existing) existing.replaceWith(icon)
+  else document.head.append(icon)
+}
+
+let focusSyncStarted = false
+function startFocusSync() {
+  if (focusSyncStarted) return
+  focusSyncStarted = true
+  // The brand icon can change from the admin panel or MCP at any time;
+  // re-read it when the user returns to this tab so the sidebar and favicon
+  // stay current without a manual reload.
+  window.addEventListener('focus', () => { void refreshSiteBranding() })
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void refreshSiteBranding()
+  })
+}
 function subscribe(listener: () => void) {
   listeners.add(listener)
-  if (!started) { started = true; void refreshSiteBranding() }
+  if (!started) { started = true; startFocusSync(); void refreshSiteBranding() }
   return () => { listeners.delete(listener) }
 }
 export function useSiteBranding() { return useSyncExternalStore(subscribe, () => current, () => defaults) }
