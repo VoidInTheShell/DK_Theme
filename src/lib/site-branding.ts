@@ -47,7 +47,7 @@ export async function refreshSiteBranding() {
     const data = await apiClient.get<{ data: Record<string, unknown> }>('/api/v1/guest/comm/config').then(response => response.data.data)
     current = {
       appName: text(data.app_name, defaults.appName) || defaults.appName,
-      logo: imageUrl(data.logo),
+      logo: imageUrl(text(data.user_logo) || data.logo),
       description: text(data.app_description),
       loginTitle: text(data.user_login_title),
       loginDescription: text(data.user_login_description),
