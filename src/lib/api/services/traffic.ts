@@ -61,9 +61,28 @@ function createMockTrafficLogs() {
   })
 }
 
-export async function getTrafficLogs() {
-  if (appConfig.enableMock) return createMockTrafficLogs()
-  const response = await apiClient.get<ApiEnvelope<RawTrafficLog[]>>('/api/v1/user/stat/getTrafficLog')
-  const data = Array.isArray(response.data.data) ? response.data.data : []
-  return data.map(normalizeTrafficLog).sort((a, b) => a.record_at - b.record_at)
+export type TrafficLogQueryResult = {
+  /** False when the administrator has legacy statistics disabled. */
+  enabled: boolean
+  logs: TrafficLog[]
+}
+
+/**
+ * The backend reports the statistics feature flag alongside the records so the
+ * dashboard can tell "statistics disabled" apart from "no data yet". Older
+ * backend builds reply with a bare array; treat those as enabled.
+ */
+export async function getTrafficLogs(): Promise<TrafficLogQueryResult> {
+  if (appConfig.enableMock) return { enabled: true, logs: createMockTrafficLogs() }
+  const response = await apiClient.get<ApiEnvelope<RawTrafficLog[] | { enabled?: boolean; logs?: RawTrafficLog[] }>>('/api/v1/user/stat/getTrafficLog')
+  const payload = response.data.data
+  if (Array.isArray(payload)) {
+    return { enabled: true, logs: normalizeLogs(payload) }
+  }
+  const logs = payload && Array.isArray(payload.logs) ? payload.logs : []
+  return { enabled: payload?.enabled !== false, logs: normalizeLogs(logs) }
+}
+
+function normalizeLogs(logs: RawTrafficLog[]) {
+  return logs.map(normalizeTrafficLog).sort((a, b) => a.record_at - b.record_at)
 }

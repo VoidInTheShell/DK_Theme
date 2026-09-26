@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context'
 import { getTrafficLogs } from '@/lib/api/services/traffic'
 import { RecentNotices } from '@/features/announcements/recent-notices'
 import { formatBytes } from '@/lib/format'
-import { Activity, Gauge, Sparkles, TrendingUp, Zap } from 'lucide-react'
+import { Activity, BarChart3, Gauge, Sparkles, TrendingUp, Zap } from 'lucide-react'
 
 const SectionCards = lazy(() => import('@/components/section-cards').then((module) => ({ default: module.SectionCards })))
 const ChartAreaInteractive = lazy(() => import('@/components/chart-area-interactive').then((module) => ({ default: module.ChartAreaInteractive })))
@@ -70,7 +70,8 @@ function formatDashboardUpdatedAt(date: Date) {
 export function DashboardPage() {
   const { user, subscribe, selfUseMode } = useAuth()
   const trafficLogsQuery = useQuery({ queryKey: ['traffic-logs'], queryFn: getTrafficLogs })
-  const trafficLogs = trafficLogsQuery.data ?? []
+  const trafficLogs = trafficLogsQuery.data?.logs ?? []
+  const statsDisabled = trafficLogsQuery.data?.enabled === false
 
   const totalTraffic = subscribe?.transfer_enable ?? user?.transfer_enable ?? 0
   const usedTraffic = subscribe?.d ?? user?.d ?? 0
@@ -209,20 +210,36 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {trafficLogsQuery.isError ? (
-          <Card className='border-rose-200/80 bg-rose-50/70 dark:border-rose-500/30 dark:bg-rose-500/10'>
-            <CardContent className='p-4 text-sm text-rose-700 dark:text-rose-200'>
-              真实流量日志加载失败，暂时无法展示最近一周摘要与趋势图。
+        {statsDisabled ? (
+          <Card className='border-slate-200/80 bg-slate-50/60 dark:border-border/70 dark:bg-background/30'>
+            <CardContent className='flex flex-col items-center justify-center gap-3 p-8 text-center'>
+              <div className='flex size-11 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/80 text-slate-400 dark:border-border/70 dark:bg-background/45 dark:text-muted-foreground'>
+                <BarChart3 className='size-5' />
+              </div>
+              <div className='text-sm font-medium text-slate-700 dark:text-foreground'>管理员未启用统计</div>
+              <div className='max-w-md text-xs leading-5 text-slate-500 dark:text-muted-foreground'>
+                站点未开启流量统计，最近一周摘要与趋势图暂不可展示；有疑问请联系站点管理员。
+              </div>
             </CardContent>
           </Card>
-        ) : null}
+        ) : (
+          <>
+            {trafficLogsQuery.isError ? (
+              <Card className='border-rose-200/80 bg-rose-50/70 dark:border-rose-500/30 dark:bg-rose-500/10'>
+                <CardContent className='p-4 text-sm text-rose-700 dark:text-rose-200'>
+                  真实流量日志加载失败，暂时无法展示最近一周摘要与趋势图。
+                </CardContent>
+              </Card>
+            ) : null}
 
-        <Suspense fallback={<DashboardChartsSkeleton />}>
-          <div className='grid min-w-0 gap-6 xl:grid-cols-[1.15fr_0.85fr]'>
-            <ChartAreaInteractive trafficLogs={trafficLogs} updatedAtLabel={dashboardUpdatedAtLabel} />
-            <TrafficWeeklySummary trafficLogs={trafficLogs} />
-          </div>
-        </Suspense>
+            <Suspense fallback={<DashboardChartsSkeleton />}>
+              <div className='grid min-w-0 gap-6 xl:grid-cols-[1.15fr_0.85fr]'>
+                <ChartAreaInteractive trafficLogs={trafficLogs} updatedAtLabel={dashboardUpdatedAtLabel} />
+                <TrafficWeeklySummary trafficLogs={trafficLogs} />
+              </div>
+            </Suspense>
+          </>
+        )}
       </section>
     </>
   )

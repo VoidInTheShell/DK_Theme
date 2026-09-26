@@ -51,6 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSelfUseMode(Boolean(commConfig.self_use_mode));
         setAnnouncementsEnabled(commConfig.enable_announcements == null ? true : Boolean(commConfig.enable_announcements));
         setToken(currentToken);
+      } catch {
+        // Session expiry redirects from the API client interceptor. Other
+        // failures keep the shell usable; individual pages surface their own
+        // error states.
       } finally {
         setHydrated(true);
       }

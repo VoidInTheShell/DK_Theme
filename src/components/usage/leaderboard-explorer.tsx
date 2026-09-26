@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { isUsageDisabledError } from "@/lib/api/client";
 import { useUsageApi } from "@/lib/usage-api";
 import { Tabs as TabsPrimitive } from "radix-ui";
 import {
@@ -98,6 +99,7 @@ export function LeaderboardExplorer({
   const remote = remoteKey === queryKey ? remoteData : null;
   const error = remoteKey === queryKey ? remoteError : "";
   const loading = !usagePreviewEnabled && remoteKey !== queryKey;
+  const [disabled, setDisabled] = useState(false);
   useEffect(() => {
     if (usagePreviewEnabled) return;
     const controller = new AbortController();
@@ -121,11 +123,17 @@ export function LeaderboardExplorer({
             setRemote(data);
             setRemoteKey(queryKey);
             setError("");
+            setDisabled(false);
           }
         })
         .catch((reason: Error) => {
           if (!controller.signal.aborted) {
-            setError(reason.message);
+            if (isUsageDisabledError(reason)) {
+              setDisabled(true);
+              setError("");
+            } else {
+              setError(reason.message);
+            }
             setRemoteKey(queryKey);
             setRemote(null);
           }
@@ -190,7 +198,12 @@ export function LeaderboardExplorer({
           刷新榜单
         </Button>
       </div>
-      {(!usagePreviewEnabled && !remoteData) || error ? (
+      {disabled ? (
+        <UsageEmpty
+          title="管理员未启用统计"
+          description="管理员未开启使用记录采集，排行榜暂时无法展示。"
+        />
+      ) : (!usagePreviewEnabled && !remoteData) || error ? (
         <UsageEmpty
           title={error ? "排行榜加载失败" : "正在加载排行榜"}
           description={

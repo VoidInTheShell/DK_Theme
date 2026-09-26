@@ -16,6 +16,7 @@ import {
   Network,
 } from "lucide-react";
 import { toast } from "sonner";
+import { isUsageDisabledError } from "@/lib/api/client";
 import { onlineHistorySeries } from "@/lib/usage-online-history";
 import { useUsageApi } from "@/lib/usage-api";
 import { Badge } from "@/components/ui/badge";
@@ -264,12 +265,24 @@ export function UsageExplorer({ selfOnly = false }: { selfOnly?: boolean }) {
           setRemoteEventKey(eventQueryKey);
         })
         .catch((error: Error) => {
-          if (!controller.signal.aborted) {
+          if (controller.signal.aborted) return;
+          if (isUsageDisabledError(error)) {
+            // Collection is off: mirror the snapshot's disabled payload so the
+            // explorer shows the configuration prompt instead of an error.
+            setLoadError("");
+            setDataset({
+              devices: [],
+              traffic: [],
+              events: [],
+              sampledAt: Date.now(),
+              enabled: false,
+            });
+          } else {
             setLoadError(error.message);
-            setRemoteEvents([]);
-            setEventTotal(0);
-            setRemoteEventKey(eventQueryKey);
           }
+          setRemoteEvents([]);
+          setEventTotal(0);
+          setRemoteEventKey(eventQueryKey);
         });
     }, 250);
     return () => {
@@ -628,13 +641,13 @@ export function UsageExplorer({ selfOnly = false }: { selfOnly?: boolean }) {
                 loadError
                   ? "使用记录加载失败"
                   : dataset.enabled === false
-                    ? "使用记录尚未启用"
+                    ? "管理员未启用统计"
                     : "正在加载使用记录"
               }
               description={
                 loadError ||
                 (dataset.enabled === false
-                  ? "启用使用记录采集后，可在这里查看流量、设备与访问历史。"
+                  ? "管理员未开启使用记录采集，暂时无法查看流量、设备与访问历史。"
                   : "正在读取实际采集数据，请稍候。")
               }
             />
