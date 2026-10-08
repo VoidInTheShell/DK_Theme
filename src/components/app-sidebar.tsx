@@ -81,7 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setOpenMobile } = useSidebar()
   const { announcementsEnabled, logout, selfUseMode, user } = useAuth()
   const [supportOpen, setSupportOpen] = React.useState(false)
-  const useRestrictedNavigation = selfUseMode && !user?.is_admin && !user?.is_staff
+  const useRestrictedNavigation = selfUseMode
 
   const sidebarUser = {
     name: brand.appName,

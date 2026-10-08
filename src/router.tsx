@@ -40,10 +40,9 @@ function ProtectedLayout() {
 }
 
 function PurchaseAccess() {
-  const { selfUseMode, user } = useAuth();
-  const isPrivilegedUser = Boolean(user?.is_admin || user?.is_staff);
+  const { selfUseMode } = useAuth();
 
-  if (selfUseMode && !isPrivilegedUser) {
+  if (selfUseMode) {
     return <Navigate to='/quota' replace />;
   }
 
