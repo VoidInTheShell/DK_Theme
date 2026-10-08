@@ -86,8 +86,8 @@ export function DashboardPage() {
     <>
       <div className='px-4 lg:px-6'>
         <Card className='overflow-hidden border-slate-200/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,252,0.92))] shadow-sm dark:border-border/70 dark:bg-[linear-gradient(135deg,rgba(17,24,39,0.96),rgba(15,23,42,0.92))]'>
-          <CardContent className='grid gap-6 p-5 lg:grid-cols-[1.12fr_0.88fr] lg:items-stretch lg:p-6'>
-            <div className='flex h-full flex-col space-y-5'>
+          <CardContent className='grid min-w-0 grid-cols-1 gap-6 p-5 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:items-stretch lg:p-6'>
+            <div className='flex h-full min-w-0 flex-col space-y-5'>
               <div className='flex flex-wrap items-center gap-2'>
                 <Badge variant='outline' className='rounded-full border-primary/15 bg-primary/8 px-2.5 py-1 text-primary'>
                   <Sparkles className='size-3.5' />
@@ -99,7 +99,7 @@ export function DashboardPage() {
               </div>
 
               <div className='space-y-2'>
-                <CardTitle className='text-[30px] font-semibold tracking-tight text-slate-900 dark:text-foreground'>
+                <CardTitle className='text-2xl font-semibold leading-snug tracking-tight text-slate-900 [overflow-wrap:anywhere] sm:text-[30px] dark:text-foreground'>
                   欢迎回来，{user?.email ?? '用户'}
                 </CardTitle>
                 <CardDescription className='max-w-xl text-sm leading-6 text-slate-500 dark:text-muted-foreground'>
@@ -107,7 +107,7 @@ export function DashboardPage() {
                 </CardDescription>
               </div>
 
-            <div className='flex h-full flex-col rounded-3xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88))] p-4 shadow-sm dark:border-border/70 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.62),rgba(15,23,42,0.42))] lg:p-5'>
+            <div className='flex h-full min-w-0 flex-col rounded-3xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88))] p-4 shadow-sm dark:border-border/70 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.62),rgba(15,23,42,0.42))] lg:p-5'>
               <div className='flex flex-col items-start gap-3 sm:flex-row sm:justify-between'>
                 <div>
                   <div className='flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-foreground'>
