@@ -7,7 +7,13 @@ import { RouteProgress } from '@/components/route-progress';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppRouter } from '@/router';
 import { AuthProvider } from '@/features/auth/auth-context';
+import { recoverFromChunkFailure } from '@/lib/chunk-recovery';
 import './index.css';
+
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  recoverFromChunkFailure();
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {

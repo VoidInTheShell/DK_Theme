@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { isChunkLoadError, recoverFromChunkFailure } from '@/lib/chunk-recovery'
 
 type RouteChunkErrorBoundaryProps = {
   children: ReactNode
@@ -26,6 +27,7 @@ export class RouteChunkErrorBoundary extends Component<
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Route chunk failed to render', error, errorInfo)
+    if (isChunkLoadError(error)) recoverFromChunkFailure()
   }
 
   componentDidUpdate(prevProps: RouteChunkErrorBoundaryProps) {
